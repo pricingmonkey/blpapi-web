@@ -2,7 +2,6 @@ from http.server import BaseHTTPRequestHandler,HTTPServer
 from urllib.parse import parse_qs,urlparse
 import json
 import blpapi
-import servicemanager
 import traceback
 
 BLOOMBERG_HOST = "localhost"
@@ -28,22 +27,37 @@ def openBloombergService(session, serviceName):
 
 def sendAndWait(session, request):
     session.sendRequest(request)
-    messages = []
+    responses = []
     while(True):
         # timeout to give a chance to Ctrl+C handling:
         ev = session.nextEvent(500)
         for msg in ev:
-            messages.append(msg)
+            print("Message type: {}".format(msg.messageType()))
+            if msg.messageType() == blpapi.Name("ReferenceDataResponse"):
+                responses.append(msg)
         responseCompletelyReceived = ev.eventType() == blpapi.Event.RESPONSE
         if responseCompletelyReceived:
             break
-    return messsages
+    return responses
+
+def extractSecurityPricing(message):
+    result = []
+    print("Extract security pricing from: {}".format(message))
+    for securityInformation in list(message.getElement("securityData").values()):
+        fields = {}
+        for field in securityInformation.getElement("fieldData").elements():
+            fields[field.name()] = field.getValueAsFloat()
+        result.append({
+            "security": securityInformation.getElementValue("security"),
+            "fields": fields
+        })
+    return result
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         query = parse_qs(urlparse(self.path).query)
-        # /single?field=...&field=...&security=...&security=...
-        if self.path.startswith("/single"):
+        # /latest?field=...&field=...&security=...&security=...
+        if self.path.startswith("/latest"):
             try:
                 securities = query.get('security')
                 fields = query.get('field')
@@ -65,11 +79,13 @@ class handler(BaseHTTPRequestHandler):
                 for field in fields:
                     request.append("fields", field)
 
-                messages = sendAndWait(session, request)
+                securityPricing = []
+                for response in sendAndWait(session, request):
+                    securityPricing.extend(extractSecurityPricing(response))
                 self.send_response(200)
                 self.send_header("Content-type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps("{}".format(messages)).encode())
+                self.wfile.write(json.dumps("{}".format(securityPricing)).encode())
             except Exception as e:
                 self.send_response(500)
                 self.end_headers()
