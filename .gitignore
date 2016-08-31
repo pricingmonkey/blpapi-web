@@ -1,1 +1,7 @@
+*~
 *.swp
+*.dll
+*.pyd
+*.zip
+__pycache__
+dist/

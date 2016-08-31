@@ -2,6 +2,8 @@ from http.server import BaseHTTPRequestHandler,HTTPServer
 from urllib.parse import parse_qs,urlparse
 import json
 import blpapi
+import servicemanager
+import traceback
 
 BLOOMBERG_HOST = "localhost"
 BLOOMBERG_PORT = 8194
@@ -40,7 +42,6 @@ def sendAndWait(session, request):
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         query = parse_qs(urlparse(self.path).query)
-        print(query)
         # /single?field=...&field=...&security=...&security=...
         if self.path.startswith("/single"):
             try:
@@ -68,7 +69,7 @@ class handler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header("Content-type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps(messages).encode())
+                self.wfile.write(json.dumps("{}".format(messages)).encode())
             except Exception as e:
                 self.send_response(500)
                 self.end_headers()
@@ -90,12 +91,13 @@ class handler(BaseHTTPRequestHandler):
 def main():
     try:
         PORT_NUMBER = 6659
-        server = HTTPServer(('', PORT_NUMBER), handler)
-        print("Server started on port", PORT_NUMBER)
+        server = HTTPServer(('localhost', PORT_NUMBER), handler)
+        print("Server started on port {}".format(PORT_NUMBER))
 
         server.serve_forever()
     except KeyboardInterrupt:
         print('^C received, shutting down the web server')
+    finally:
         server.socket.close()
 
 if __name__ == "__main__":
