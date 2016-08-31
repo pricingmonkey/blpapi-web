@@ -73,6 +73,7 @@ class handler(BaseHTTPRequestHandler):
                 refDataService = openBloombergService(session, "//blp/refdata")
                 request = refDataService.createRequest("ReferenceDataRequest")
 
+                request.set("returnFormattedValue", True)
                 for security in securities:
                     request.append("securities", security)
 
