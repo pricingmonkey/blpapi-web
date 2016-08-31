@@ -82,10 +82,11 @@ class handler(BaseHTTPRequestHandler):
                 securityPricing = []
                 for response in sendAndWait(session, request):
                     securityPricing.extend(extractSecurityPricing(response))
+
                 self.send_response(200)
                 self.send_header("Content-type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps("{}".format(securityPricing)).encode())
+                self.wfile.write(json.dumps(securityPricing).encode())
             except Exception as e:
                 self.send_response(500)
                 self.end_headers()
