@@ -12,13 +12,13 @@ class Target:
 
 standalone_server = Target(
     script = 'server.py',
-    dest_base = 'pmbb'
+    dest_base = 'run'
 )
 
 service = Target(
     modules = ['windows-service'],
     cmdline_style='pywin32',
-    dest_base = 'pmbb-service'
+    dest_base = 'run-service'
 )
 
 setup(
