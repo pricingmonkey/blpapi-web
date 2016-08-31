@@ -46,7 +46,7 @@ def extractSecurityPricing(message):
     for securityInformation in list(message.getElement("securityData").values()):
         fields = {}
         for field in securityInformation.getElement("fieldData").elements():
-            fields[field.name()] = field.getValueAsFloat()
+            fields[str(field.name())] = field.getValue()
         result.append({
             "security": securityInformation.getElementValue("security"),
             "fields": fields
