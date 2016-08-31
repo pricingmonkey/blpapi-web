@@ -42,7 +42,7 @@ def sendAndWait(session, request):
 
 def extractSecurityPricing(message):
     result = []
-    print("Extract security pricing from: {}".format(message))
+    print("extractSecurityPricing input: {}".format(message))
     for securityInformation in list(message.getElement("securityData").values()):
         fields = {}
         for field in securityInformation.getElement("fieldData").elements():
@@ -51,7 +51,29 @@ def extractSecurityPricing(message):
             "security": securityInformation.getElementValue("security"),
             "fields": fields
         })
+    print("extractSecurityPricing output: {}".format(result))
     return result
+
+def extractError(errorElement):
+    category = errorElement.getElementValue("category")
+    subcategory = errorElement.getElementValue("subcategory")
+    message = errorElement.getElementValue("message")
+    return "{}/{} {}".format(category, subcategory, message)
+
+def extractErrors(message):
+    result = []
+    print("extractErrors input: {}".format(message))
+    if message.hasElement("responseError"): 
+        result.append(extractError(message.getElement("responseError")))
+    for securityInformation in list(message.getElement("securityData").values()):
+        for fieldException in list(securityInformation.getElement("fieldException").values()):
+            error = extractError(fieldException.getElement("errorInfo"))
+            result.append("{}: {}".format(error, fieldException.getElementValue("fieldId")))
+        if securityInformation.hasElement("securityError"):
+            result.append(extractError(securityInformation.getElement("securityError")))
+    print("extractErrors output: {}".format(result))
+    return result
+
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -80,15 +102,21 @@ class handler(BaseHTTPRequestHandler):
                 for field in fields:
                     request.append("fields", field)
 
+                responses = sendAndWait(session, request)
+
                 securityPricing = []
-                for response in sendAndWait(session, request):
+                for response in responses:
                     securityPricing.extend(extractSecurityPricing(response))
+
+                errors = []
+                for response in responses:
+                    errors.extend(extractErrors(response))
 
                 self.send_response(200)
                 self.send_header("Content-type", "application/json")
                 self.end_headers()
-                print("JSON response: {}".format(securityPricing))
-                self.wfile.write(json.dumps(securityPricing).encode())
+                response = { "response": securityPricing, "errors": errors }
+                self.wfile.write(json.dumps(response).encode())
             except Exception as e:
                 self.send_response(500)
                 self.end_headers()
