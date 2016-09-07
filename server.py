@@ -40,9 +40,9 @@ def sendAndWait(session, request):
             break
     return responses
 
-def extractSecurityPricing(message):
+def extractReferenceSecurityPricing(message):
     result = []
-    print("extractSecurityPricing input: {}".format(message))
+    print("extractReferenceSecurityPricing input: {}".format(message))
     for securityInformation in list(message.getElement("securityData").values()):
         fields = {}
         for field in securityInformation.getElement("fieldData").elements():
@@ -51,7 +51,33 @@ def extractSecurityPricing(message):
             "security": securityInformation.getElementValue("security"),
             "fields": fields
         })
-    print("extractSecurityPricing output: {}".format(result))
+    print("extractReferenceSecurityPricing output: {}".format(result))
+    return result
+
+def extractHistoricalSecurityPricing(message):
+    result = []
+    print("extractHistoricalSecurityPricing input: {}".format(message))
+    for securityInformation in list(message.getElement("securityData").values()):
+        results = []
+        for field in securityInformation.getElement("fieldData").values():
+            fieldName = None
+            singleResult = {}
+            for fieldElement in field.elements():
+                if str(fieldElement.name()) == "date":
+                    singleResult["date"].append(fieldElement.getValue())
+                elif str(fieldElement.name()) == "relativeDate":
+                    singleResult["relativeDate"].append(fieldElement.getValue())
+                else: # assume it's the {fieldName -> fieldValue}
+                    fieldName = str(fieldElement.name())
+                    singleResult["value"].append(fieldElement.value())
+            if not fieldName in results:
+                results[fieldName] = []
+            results[fieldName].append(singleResult)
+        result.append({
+            "security": securityInformation.getElementValue("security"),
+            "values": results
+        })
+    print("extractHistoricalSecurityPricing output: {}".format(result))
     return result
 
 def extractError(errorElement):
@@ -74,6 +100,70 @@ def extractErrors(message):
     print("extractErrors output: {}".format(result))
     return result
 
+def requestLatest(securities, fields):
+    session = None
+    try:
+        session = openBloombergSession()
+        refDataService = openBloombergService(session, "//blp/refdata")
+        request = refDataService.createRequest("ReferenceDataRequest")
+
+        request.set("returnFormattedValue", True)
+        for security in securities:
+            request.append("securities", security)
+
+        for field in fields:
+            request.append("fields", field)
+
+        responses = sendAndWait(session, request)
+
+        securityPricing = []
+        for response in responses:
+            securityPricing.extend(extractReferenceSecurityPricing(response))
+
+        errors = []
+        for response in responses:
+            errors.extend(extractErrors(response))
+        return { "response": securityPricing, "errors": errors }
+    except Exception as e:
+        raise
+    finally:
+        if session is not None:
+            session.stop()
+
+def requestHistorical(securities, fields, startDate, endDate):
+    session = None
+    try:
+        session = openBloombergSession()
+        refDataService = openBloombergService(session, "//blp/refdata")
+        request = refDataService.createRequest("HistoricalDataRequest")
+
+        request.set("returnFormattedValue", True)
+        request.set("startDate", startDate)
+        request.set("endDate", endDate)
+        request.set("periodicitySelection", "DAILY");
+
+        for security in securities:
+            request.append("securities", security)
+
+        for field in fields:
+            request.append("fields", field)
+
+        responses = sendAndWait(session, request)
+
+        securityPricing = []
+        for response in responses:
+            securityPricing.extend(extractHistoricalSecurityPricing(response))
+
+        errors = []
+        for response in responses:
+            errors.extend(extractErrors(response))
+
+        return { "response": securityPricing, "errors": errors }
+    except Exception as e:
+        raise
+    finally:
+        if session is not None:
+            session.stop()
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -81,8 +171,33 @@ class handler(BaseHTTPRequestHandler):
         # /latest?field=...&field=...&security=...&security=...
         if self.path.startswith("/latest"):
             try:
-                securities = query.get('security')
-                fields = query.get('field')
+                securities = query.get('security') or []
+                fields = query.get('field') or []
+            except Exception as e:
+                self.send_response(400)
+                self.end_headers()
+                self.wfile.write("{0}".format(e).encode())
+                raise
+
+            try:
+                self.send_response(200)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                response = requestLatest(securities, fields)
+                self.wfile.write(json.dumps(response).encode())
+            except Exception as e:
+                self.send_response(500)
+                self.end_headers()
+                self.wfile.write("{0}".format(e).encode())
+                raise
+
+        # /historical?fields=[...]&securities=[...]
+        elif self.path.startswith("/historical"):
+            try:
+                securities = query.get('security') or []
+                fields = query.get('field') or []
+                startDate = query.get('startDate')
+                endDate = query.get('endDate')
             except Exception as e:
                 self.send_response(400)
                 self.end_headers()
@@ -91,46 +206,15 @@ class handler(BaseHTTPRequestHandler):
 
             session = None
             try:
-                session = openBloombergSession()
-                refDataService = openBloombergService(session, "//blp/refdata")
-                request = refDataService.createRequest("ReferenceDataRequest")
-
-                request.set("returnFormattedValue", True)
-                for security in securities:
-                    request.append("securities", security)
-
-                for field in fields:
-                    request.append("fields", field)
-
-                responses = sendAndWait(session, request)
-
-                securityPricing = []
-                for response in responses:
-                    securityPricing.extend(extractSecurityPricing(response))
-
-                errors = []
-                for response in responses:
-                    errors.extend(extractErrors(response))
-
                 self.send_response(200)
                 self.send_header("Content-type", "application/json")
                 self.end_headers()
-                response = { "response": securityPricing, "errors": errors }
+                response = requestHistorical(securities, fields, startDate, endDate)
                 self.wfile.write(json.dumps(response).encode())
             except Exception as e:
                 self.send_response(500)
                 self.end_headers()
                 self.wfile.write("{0}".format(e).encode())
-                raise
-            finally:
-                if session is not None:
-                    session.stop()
-
-        # /historical?fields=[...]&securities=[...]
-        elif self.path.startswith("/historical"):
-            self.send_response(400)
-            self.end_headers()
-            self.wfile.write("Not implemented yet".encode())
         else:
             self.send_response(404)
             self.end_headers()
