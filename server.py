@@ -55,27 +55,38 @@ def extractReferenceSecurityPricing(message):
     return result
 
 def extractHistoricalSecurityPricing(message):
-    result = []
     print("extractHistoricalSecurityPricing input: {}".format(message))
+
+    resultsForDate = {}
     for securityInformation in list(message.getElement("securityData").values()):
-        results = []
+        security = securityInformation.getElementValue("security")
         for field in securityInformation.getElement("fieldData").values():
-            fieldName = None
             singleResult = {}
             for fieldElement in field.elements():
                 if str(fieldElement.name()) == "date":
-                    singleResult["date"].append(fieldElement.getValue())
+                    date = fieldElement.getValue()
                 elif str(fieldElement.name()) == "relativeDate":
-                    singleResult["relativeDate"].append(fieldElement.getValue())
+                    pass
                 else: # assume it's the {fieldName -> fieldValue}
-                    fieldName = str(fieldElement.name())
-                    singleResult["value"].append(fieldElement.value())
-            if not fieldName in results:
-                results[fieldName] = []
-            results[fieldName].append(singleResult)
+                    singleResult["name"] = str(fieldElement.name())
+                    singleResult["value"] = fieldElement.value()
+            if not date in resultsForDate:
+                resultsForDate[date] = {}
+            if not security in resultsForDate[date]:
+                resultsForDate[date][security] = []
+            resultsForDate[date][security].append(singleResult)
+
+    result = []
+    for date, securities in resultsForDate:
+        valuesForSecurities = []
+        for security, fields in securities:
+            valuesForSecurities.append({
+                security: security,
+                fields: fields
+            })
         result.append({
-            "security": securityInformation.getElementValue("security"),
-            "values": results
+            "date": date,
+            "values": valuesForSecurities
         })
     print("extractHistoricalSecurityPricing output: {}".format(result))
     return result
