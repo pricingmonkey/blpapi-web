@@ -153,7 +153,6 @@ def requestHistorical(securities, fields, startDate, endDate):
         refDataService = openBloombergService(session, "//blp/refdata")
         request = refDataService.createRequest("HistoricalDataRequest")
 
-        request.set("returnFormattedValue", True)
         request.set("startDate", startDate)
         request.set("endDate", endDate)
         request.set("periodicitySelection", "DAILY");
