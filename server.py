@@ -103,11 +103,13 @@ def extractErrors(message):
     if message.hasElement("responseError"): 
         result.append(extractError(message.getElement("responseError")))
     for securityInformation in list(message.getElement("securityData").values()):
-        for fieldException in list(securityInformation.getElement("fieldException").values()):
-            error = extractError(fieldException.getElement("errorInfo"))
-            result.append("{}: {}".format(error, fieldException.getElementValue("fieldId")))
+        if securityInformation.hasElement("fieldExceptions"):
+            for fieldException in list(securityInformation.getElement("fieldExceptions").values()):
+                error = extractError(fieldException.getElement("errorInfo"))
+                result.append("{}: {}".format(error, fieldException.getElementValue("fieldId")))
         if securityInformation.hasElement("securityError"):
-            result.append(extractError(securityInformation.getElement("securityError")))
+            error = extractError(securityInformation.getElement("securityError"))
+            result.append("{}: {}".format(error, securityInformation.getElementValue("security")))
     print("extractErrors output: {}".format(result))
     return result
 
