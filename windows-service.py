@@ -33,7 +33,7 @@ class BloombergBridgeService(win32serviceutil.ServiceFramework):
 
     def main(self):
         print("main")
-        sys.stdout = sys.stderr = open("c:\pricing-monkey-bloomberg-bridge.log", "a")
+        sys.stdout = sys.stderr = open("c:\Windows\Logs\pricing-monkey.log", "a")
         t = threading.Thread(target=start_server)
         t.start()
         self.flag.wait()
