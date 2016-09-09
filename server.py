@@ -44,9 +44,12 @@ def extractReferenceSecurityPricing(message):
     result = []
     print("extractReferenceSecurityPricing input: {}".format(message))
     for securityInformation in list(message.getElement("securityData").values()):
-        fields = {}
+        fields = []
         for field in securityInformation.getElement("fieldData").elements():
-            fields[str(field.name())] = field.getValue()
+            fields.append({
+                "name": str(field.name()),
+                "value": field.getValue()
+            })
         result.append({
             "security": securityInformation.getElementValue("security"),
             "fields": fields
