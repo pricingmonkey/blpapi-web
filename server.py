@@ -224,7 +224,11 @@ class handler(BaseHTTPRequestHandler):
                 securities = query.get('security') or []
                 fields = query.get('field') or []
                 startDate = query.get('startDate')
+                if startDate is not None:
+                    startDate = startDate[0]
                 endDate = query.get('endDate')
+                if endDate is not None:
+                    endDate = endDate[0]
             except Exception as e:
                 self.send_response(400)
                 self.send_header("Access-Control-Allow-Origin", "http://pricingmonkey.com")
