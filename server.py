@@ -43,17 +43,18 @@ def sendAndWait(session, request):
 def extractReferenceSecurityPricing(message):
     result = []
     print("extractReferenceSecurityPricing input: {}".format(message))
-    for securityInformation in list(message.getElement("securityData").values()):
-        fields = []
-        for field in securityInformation.getElement("fieldData").elements():
-            fields.append({
-                "name": str(field.name()),
-                "value": field.getValue()
+    if message.hasElement("securityData"): 
+        for securityInformation in list(message.getElement("securityData").values()):
+            fields = []
+            for field in securityInformation.getElement("fieldData").elements():
+                fields.append({
+                    "name": str(field.name()),
+                    "value": field.getValue()
+                })
+            result.append({
+                "security": securityInformation.getElementValue("security"),
+                "fields": fields
             })
-        result.append({
-            "security": securityInformation.getElementValue("security"),
-            "fields": fields
-        })
     print("extractReferenceSecurityPricing output: {}".format(result))
     return result
 
@@ -61,23 +62,24 @@ def extractHistoricalSecurityPricing(message):
     print("extractHistoricalSecurityPricing input: {}".format(message))
 
     resultsForDate = {}
-    for securityInformation in list(message.getElement("securityData").values()):
-        security = securityInformation.getElementValue("security")
-        for field in securityInformation.getElement("fieldData").values():
-            singleResult = {}
-            for fieldElement in field.elements():
-                if str(fieldElement.name()) == "date":
-                    date = fieldElement.getValue()
-                elif str(fieldElement.name()) == "relativeDate":
-                    pass
-                else: # assume it's the {fieldName -> fieldValue}
-                    singleResult["name"] = str(fieldElement.name())
-                    singleResult["value"] = fieldElement.value()
-            if not date in resultsForDate:
-                resultsForDate[date] = {}
-            if not security in resultsForDate[date]:
-                resultsForDate[date][security] = []
-            resultsForDate[date][security].append(singleResult)
+    if message.hasElement("securityData"): 
+        for securityInformation in list(message.getElement("securityData").values()):
+            security = securityInformation.getElementValue("security")
+            for field in securityInformation.getElement("fieldData").values():
+                singleResult = {}
+                for fieldElement in field.elements():
+                    if str(fieldElement.name()) == "date":
+                        date = fieldElement.getValue()
+                    elif str(fieldElement.name()) == "relativeDate":
+                        pass
+                    else: # assume it's the {fieldName -> fieldValue}
+                        singleResult["name"] = str(fieldElement.name())
+                        singleResult["value"] = fieldElement.value()
+                if not date in resultsForDate:
+                    resultsForDate[date] = {}
+                if not security in resultsForDate[date]:
+                    resultsForDate[date][security] = []
+                resultsForDate[date][security].append(singleResult)
 
     result = []
     for date, securities in resultsForDate:
@@ -105,14 +107,15 @@ def extractErrors(message):
     print("extractErrors input: {}".format(message))
     if message.hasElement("responseError"): 
         result.append(extractError(message.getElement("responseError")))
-    for securityInformation in list(message.getElement("securityData").values()):
-        if securityInformation.hasElement("fieldExceptions"):
-            for fieldException in list(securityInformation.getElement("fieldExceptions").values()):
-                error = extractError(fieldException.getElement("errorInfo"))
-                result.append("{}: {}".format(error, fieldException.getElementValue("fieldId")))
-        if securityInformation.hasElement("securityError"):
-            error = extractError(securityInformation.getElement("securityError"))
-            result.append("{}: {}".format(error, securityInformation.getElementValue("security")))
+    if message.hasElement("securityData"): 
+        for securityInformation in list(message.getElement("securityData").values()):
+            if securityInformation.hasElement("fieldExceptions"):
+                for fieldException in list(securityInformation.getElement("fieldExceptions").values()):
+                    error = extractError(fieldException.getElement("errorInfo"))
+                    result.append("{}: {}".format(error, fieldException.getElementValue("fieldId")))
+            if securityInformation.hasElement("securityError"):
+                error = extractError(securityInformation.getElement("securityError"))
+                result.append("{}: {}".format(error, securityInformation.getElementValue("security")))
     print("extractErrors output: {}".format(result))
     return result
 
