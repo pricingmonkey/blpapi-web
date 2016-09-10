@@ -1,7 +1,12 @@
 from http.server import BaseHTTPRequestHandler,HTTPServer
 from urllib.parse import parse_qs,urlparse
 import json
-import blpapi
+import sys
+if len(sys.argv) >= 2 and sys.argv[1] == "mock":
+    print("Using blpapi_mock")
+    import blpapi_mock as blpapi
+else:
+    import blpapi
 import traceback
 
 BLOOMBERG_HOST = "localhost"
