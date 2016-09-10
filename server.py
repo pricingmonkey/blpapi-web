@@ -33,7 +33,7 @@ def sendAndWait(session, request):
         ev = session.nextEvent(500)
         for msg in ev:
             print("Message type: {}".format(msg.messageType()))
-            if msg.messageType() == blpapi.Name("ReferenceDataResponse"):
+            if msg.messageType() == blpapi.Name("ReferenceDataResponse") or msg.messageType() == blpapi.Name("HistoricalDataResponse"):
                 responses.append(msg)
         responseCompletelyReceived = ev.eventType() == blpapi.Event.RESPONSE
         if responseCompletelyReceived:
