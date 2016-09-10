@@ -188,10 +188,17 @@ def requestHistorical(securities, fields, startDate, endDate):
         if session is not None:
             session.stop()
 
+def allowCORS(host):
+    HOSTS = ["http://pricingmonkey.com", "http://localhost:8080"]
+    if host in HOSTS:
+        return host
+    else:
+        return "null"
+
 class handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "http://pricingmonkey.com")
+        self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
         self.end_headers()
         self.wfile.write("".encode())
 
@@ -204,21 +211,21 @@ class handler(BaseHTTPRequestHandler):
                 fields = query.get('field') or []
             except Exception as e:
                 self.send_response(400)
-                self.send_header("Access-Control-Allow-Origin", "http://pricingmonkey.com")
+                self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
                 self.wfile.write("{0}".format(e).encode())
                 raise
 
             try:
                 self.send_response(200)
-                self.send_header("Access-Control-Allow-Origin", "http://pricingmonkey.com")
+                self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.send_header("Content-type", "application/json")
                 self.end_headers()
                 response = requestLatest(securities, fields)
                 self.wfile.write(json.dumps(response).encode())
             except Exception as e:
                 self.send_response(500)
-                self.send_header("Access-Control-Allow-Origin", "http://pricingmonkey.com")
+                self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
                 self.wfile.write("{0}".format(e).encode())
                 raise
@@ -236,7 +243,7 @@ class handler(BaseHTTPRequestHandler):
                     endDate = endDate[0]
             except Exception as e:
                 self.send_response(400)
-                self.send_header("Access-Control-Allow-Origin", "http://pricingmonkey.com")
+                self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
                 self.wfile.write("{0}".format(e).encode())
                 raise
@@ -245,19 +252,19 @@ class handler(BaseHTTPRequestHandler):
             try:
                 self.send_response(200)
                 self.send_header("Content-type", "application/json")
-                self.send_header("Access-Control-Allow-Origin", "http://pricingmonkey.com")
+                self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
                 response = requestHistorical(securities, fields, startDate, endDate)
                 self.wfile.write(json.dumps(response).encode())
             except Exception as e:
                 self.send_response(500)
-                self.send_header("Access-Control-Allow-Origin", "http://pricingmonkey.com")
+                self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
                 self.wfile.write("{0}".format(e).encode())
                 raise
         else:
             self.send_response(404)
-            self.send_header("Access-Control-Allow-Origin", "http://pricingmonkey.com")
+            self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
             self.end_headers()
 
 def main():
