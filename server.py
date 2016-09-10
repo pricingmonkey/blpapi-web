@@ -79,7 +79,7 @@ def extractHistoricalSecurityPricing(message):
                         pass
                     else: # assume it's the {fieldName -> fieldValue}
                         singleResult["name"] = str(fieldElement.name())
-                        singleResult["value"] = fieldElement.value()
+                        singleResult["value"] = fieldElement.getValue()
                 if not date in resultsForDate:
                     resultsForDate[date] = {}
                 if not security in resultsForDate[date]:
@@ -87,12 +87,12 @@ def extractHistoricalSecurityPricing(message):
                 resultsForDate[date][security].append(singleResult)
 
     result = []
-    for date, securities in resultsForDate:
+    for date, securities in resultsForDate.items():
         valuesForSecurities = []
-        for security, fields in securities:
+        for security, fields in securities.items():
             valuesForSecurities.append({
-                security: security,
-                fields: fields
+                "security": security,
+                "fields": fields
             })
         result.append({
             "date": date,
@@ -254,6 +254,7 @@ class handler(BaseHTTPRequestHandler):
                 self.send_header("Access-Control-Allow-Origin", "http://pricingmonkey.com")
                 self.end_headers()
                 self.wfile.write("{0}".format(e).encode())
+                raise
         else:
             self.send_response(404)
             self.send_header("Access-Control-Allow-Origin", "http://pricingmonkey.com")
