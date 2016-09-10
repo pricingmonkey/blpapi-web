@@ -1,7 +1,10 @@
+/.venv/
+/.cache/
 *~
 *.swp
 *.dll
 *.pyd
+*.pyc
 *.zip
 __pycache__
 dist/
