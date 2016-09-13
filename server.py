@@ -31,7 +31,7 @@ def sendAndWait(session, request):
     responses = []
     while(True):
         # timeout to give a chance to Ctrl+C handling:
-        ev = session.nextEvent(500)
+        ev = session.nextEvent(100)
         for msg in ev:
             print("Message type: {}".format(msg.messageType()))
             if msg.messageType() == blpapi.Name("ReferenceDataResponse") or msg.messageType() == blpapi.Name("HistoricalDataResponse"):
