@@ -6,7 +6,25 @@ Runs on Python >= 3.4.
 # Set up
 
 1. Install: https://sourceforge.net/projects/pywin32/files/pywin32/Build%20220/
-2. Run: pip install -i requirements.txt
+2. Run:
+
+    virtualenv -p python3 ./venv
+    source ./venv/bin/activate
+    pip install -i requirements.txt
+
+# Run tests
+
+    pytest
+
+# Run
+
+Run server (only on Windows with Bloomberg connection):
+
+    python server.py
+
+Run mock server:
+
+    python server.py mock
 
 # Developer installation
 
