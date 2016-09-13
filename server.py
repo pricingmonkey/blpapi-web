@@ -1,3 +1,4 @@
+import hashlib
 from http.server import BaseHTTPRequestHandler,HTTPServer
 from urllib.parse import parse_qs,urlparse
 import json
@@ -190,6 +191,11 @@ def allowCORS(host):
     else:
         return "null"
 
+def generateEtag(obj):
+    sha1 = hashlib.sha1()
+    sha1.update("{}".format(obj).encode())
+    return '"{}"'.format(sha1.hexdigest())
+
 class handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
@@ -243,9 +249,24 @@ class handler(BaseHTTPRequestHandler):
                 self.wfile.write("{0}".format(e).encode())
                 raise
 
+            etag = generateEtag({
+                "securities": securities,
+                "fields": fields,
+                "startDate": startDate,
+                "endDate": endDate
+            })
+            if self.headers.get('If-None-Match') == etag:
+                self.send_response(304)
+                self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
+                self.end_headers()
+                return
+
             session = None
             try:
                 self.send_response(200)
+                self.send_header('Etag', etag)
+                self.send_header('Cache-Control', "max-age=86400, must-revalidate")
+                self.send_header("Vary", "Origin")
                 self.send_header("Content-type", "application/json")
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
