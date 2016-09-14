@@ -1,3 +1,5 @@
+import random
+
 class SessionOptions:
     def setServerHost(self, host):
         pass
@@ -6,31 +8,30 @@ class SessionOptions:
         pass
 
 class Request:
-    def __init__(self, message):
-        self.message = message
+    def __init__(self, serviceType):
+        self.params = {}
+        self.serviceType = serviceType
 
     def set(self, name, value):
-        pass
+        self.params[name] = value
 
     def append(self, name, value):
-        pass
+        if not name in self.params:
+            self.params[name] = []
+        self.params[name].append(value)
 
     def message(self):
-        return self.message
-
-class Service:
-    def createRequest(self, serviceType):
-        if serviceType == "ReferenceDataRequest":
-            return Request(Message({
+        if self.serviceType == "ReferenceDataRequest":
+            return Message({
                 "securityData": List([Map({
-                    "security": "L Z7 Comdty",
+                    "security": security,
                     "fieldData": Map({
-                        "PX_LAST": "90"
-                    })
-                })])
-            }))
-        if serviceType == "HistoricalDataRequest":
-            return Request(Message({
+                        field:  str(90 + (0.5 - random.random()))
+                    for field in self.params["fields"]})
+                }) for security in self.params["securities"]])
+            })
+        if self.serviceType == "HistoricalDataRequest":
+            return Message({
                 "securityData": List([Map({
                     "security": "L Z7 Comdty",
                     "fieldData": List([
@@ -43,7 +44,11 @@ class Service:
                             "PX_LAST": 90.05
                     })])
                 })])
-            }))
+            })
+
+class Service:
+    def createRequest(self, serviceType):
+        return Request(serviceType)
 
 def Name(name):
     return name
@@ -151,7 +156,7 @@ class Session:
         return Service()
 
     def sendRequest(self, request):
-        self.responses = [Event([request.message])]
+        self.responses = [Event([request.message()])]
 
     def nextEvent(self, timeout):
         try:
