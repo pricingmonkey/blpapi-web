@@ -33,7 +33,6 @@ def sendAndWait(session, request):
         # timeout to give a chance to Ctrl+C handling:
         ev = session.nextEvent(100)
         for msg in ev:
-            print("Message type: {}".format(msg.messageType()))
             if msg.messageType() == blpapi.Name("ReferenceDataResponse") or msg.messageType() == blpapi.Name("HistoricalDataResponse"):
                 responses.append(msg)
         responseCompletelyReceived = ev.eventType() == blpapi.Event.RESPONSE
@@ -43,7 +42,6 @@ def sendAndWait(session, request):
 
 def extractReferenceSecurityPricing(message):
     result = []
-    print("extractReferenceSecurityPricing input: {}".format(message))
     if message.hasElement("securityData"): 
         for securityInformation in list(message.getElement("securityData").values()):
             fields = []
@@ -56,12 +54,9 @@ def extractReferenceSecurityPricing(message):
                 "security": securityInformation.getElementValue("security"),
                 "fields": fields
             })
-    print("extractReferenceSecurityPricing output: {}".format(result))
     return result
 
 def extractHistoricalSecurityPricing(message):
-    print("extractHistoricalSecurityPricing input: {}".format(message))
-
     resultsForDate = {}
     if message.hasElement("securityData"): 
         for securityInformation in list(message.getElement("securityData").values()):
@@ -97,7 +92,6 @@ def extractHistoricalSecurityPricing(message):
             "date": date,
             "values": valuesForSecurities
         })
-    print("extractHistoricalSecurityPricing output: {}".format(result))
     return sorted(result, key=lambda each: each["date"])
 
 def extractError(errorElement):
@@ -108,7 +102,6 @@ def extractError(errorElement):
 
 def extractErrors(message):
     result = []
-    print("extractErrors input: {}".format(message))
     if message.hasElement("responseError"): 
         result.append(extractError(message.getElement("responseError")))
     if message.hasElement("securityData"): 
@@ -120,7 +113,6 @@ def extractErrors(message):
             if securityInformation.hasElement("securityError"):
                 error = extractError(securityInformation.getElement("securityError"))
                 result.append("{}: {}".format(error, securityInformation.getElementValue("security")))
-    print("extractErrors output: {}".format(result))
     return result
 
 def requestLatest(securities, fields):
