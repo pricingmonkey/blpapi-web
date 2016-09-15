@@ -66,21 +66,24 @@ def extractHistoricalSecurityPricing(message):
     if message.hasElement("securityData"): 
         for securityInformation in list(message.getElement("securityData").values()):
             security = securityInformation.getElementValue("security")
-            for field in securityInformation.getElement("fieldData").values():
-                singleResult = {}
-                for fieldElement in field.elements():
+            for fieldsOnDate in securityInformation.getElement("fieldData").values():
+                fields = []
+                for fieldElement in fieldsOnDate.elements():
                     if str(fieldElement.name()) == "date":
                         date = fieldElement.getValue()
                     elif str(fieldElement.name()) == "relativeDate":
                         pass
                     else: # assume it's the {fieldName -> fieldValue}
-                        singleResult["name"] = str(fieldElement.name())
-                        singleResult["value"] = fieldElement.getValue()
+                        fields.append({
+                            "name": str(fieldElement.name()),
+                            "value": fieldElement.getValue()
+                        })
                 if not date in resultsForDate:
                     resultsForDate[date] = {}
                 if not security in resultsForDate[date]:
                     resultsForDate[date][security] = []
-                resultsForDate[date][security].append(singleResult)
+                for field in fields:
+                    resultsForDate[date][security].append(field)
 
     result = []
     for date, securities in resultsForDate.items():
@@ -95,7 +98,7 @@ def extractHistoricalSecurityPricing(message):
             "values": valuesForSecurities
         })
     print("extractHistoricalSecurityPricing output: {}".format(result))
-    return result
+    return sorted(result, key=lambda each: each["date"])
 
 def extractError(errorElement):
     category = errorElement.getElementValue("category")

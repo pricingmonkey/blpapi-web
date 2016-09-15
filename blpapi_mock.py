@@ -1,4 +1,5 @@
 import random
+from datetime import datetime, timedelta
 
 class SessionOptions:
     def setServerHost(self, host):
@@ -33,18 +34,15 @@ class Request:
         if self.serviceType == "HistoricalDataRequest":
             return Message({
                 "securityData": List([Map({
-                    "security": "L Z7 Comdty",
+                    "security": security,
                     "fieldData": List([
                         Map({
-                            "date": "2006-01-31",
-                            "PX_LAST": 90
-                        }),
-                        Map({
-                            "date": "2006-02-01",
-                            "PX_LAST": 90.05
-                    })])
-                })])
-            })
+                                **{ "date": (datetime.strptime("20060201", "%Y%m%d") + timedelta(days=i)).strftime("%Y-%m-%d")},
+                                **{ field: str(90 + (0.5 - random.random()))
+                                    for field in self.params["fields"] }
+                        }) for i in range(365)])
+                    }) for security in self.params["securities"]])
+                })
 
 class Service:
     def createRequest(self, serviceType):
