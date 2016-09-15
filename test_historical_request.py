@@ -1,5 +1,6 @@
 from server import extractHistoricalSecurityPricing, extractErrors
 from blpapi_mock import *
+import pytest
 
 def test_simple():
     message = Message({
@@ -19,8 +20,12 @@ def test_simple():
     })
     response = extractHistoricalSecurityPricing(message)
     assert len(response) == 2
-    assert response[0]["date"] == "2006-02-01"
-    assert response[1]["date"] == "2006-01-31"
+    if response[0]["date"] == "2006-02-01":
+        assert response[1]["date"] == "2006-01-31"
+    elif response[0]["date"] == "2006-01-31":
+        assert response[1]["date"] == "2006-02-01"
+    else:
+        pytest.fail("Response must contain both results for dates: '2006-01-31' and '2006-02-01'")
 
 def test_response_error():
     message = Message({
