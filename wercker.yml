@@ -1,0 +1,16 @@
+box: python:3.5
+build:
+  steps:
+    - script:
+        name: virtualenv install
+        code: pip install virtualenv
+    - virtualenv:
+        name: setup virtual environment
+
+    - pip-install:
+        requirements_file: "requirements-dev.txt"
+
+    - script:
+        name: pytest
+        code: pytest
+
