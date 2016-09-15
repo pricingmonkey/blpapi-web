@@ -14,3 +14,9 @@ build:
         name: pytest
         code: pytest
 
+  after-steps:
+      - slack-notifier:
+          url: $SLACK_URL
+          username: wercker
+          notify_on: "failed"
+
