@@ -1,6 +1,11 @@
 import random
 from datetime import datetime, timedelta
 
+def merge_dicts(d1, d2):
+    out = d1.copy()
+    out.update(d2)
+    return out
+
 class SessionOptions:
     def setServerHost(self, host):
         pass
@@ -36,11 +41,10 @@ class Request:
                 "securityData": List([Map({
                     "security": security,
                     "fieldData": List([
-                        Map({
-                                **{ "date": (datetime.strptime("20060201", "%Y%m%d") + timedelta(days=i)).strftime("%Y-%m-%d")},
-                                **{ field: str(90 + (0.5 - random.random()))
-                                    for field in self.params["fields"] }
-                        }) for i in range(365)])
+                        Map(merge_dicts(
+                            { "date": (datetime.strptime("20060201", "%Y%m%d") + timedelta(days=i)).strftime("%Y-%m-%d")},
+                            { field: str(90 + (0.5 - random.random())) for field in self.params["fields"] }
+                        )) for i in range(365)])
                     }) for security in self.params["securities"]])
                 })
 

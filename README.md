@@ -1,7 +1,7 @@
 # Info
 
 This module pulls price information from external data providers (eg. Bloomberg).
-Runs on Python >= 3.4.
+Runs on Python == 3.4.
 
 # installation and deployment can only be done on windows.
 
