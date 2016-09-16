@@ -11,6 +11,10 @@ Runs on Python >= 3.4.
 # install scoop (the following command can be found at scoop.sh)
 1. Run: set-executionpolicy unrestricted -s cu
 2. Run: iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
+1. Install: https://sourceforge.net/projects/pywin32/files/pywin32/Build%20220/
+2. select pywin for python3.5, and download it
+3. open the file, select run and click the next boxes to install.
+
 3. Run: scoop install python
 4. you may need to click an OK on a windows pop-up.
 
@@ -29,14 +33,26 @@ Runs on Python >= 3.4.
 5. run: pip install -r requirements.txt
 
 
+
+go to: https://www.bloomberglabs.com/api/libraries/
+download: C/C++ supported Release.
+go to the downloaded file which is zipped. Extract it to C:
+cd into the bloapi_cpp_... folder
+add the path to an environment variable called BLPAPI_ROOT
+restart PowerShell
+
+go to the bloombergBridge directory
+run pip install -r requirements.txt
+
+
+!!!! NOW INSTALL VISUAL STUDIO !!!!!
+
+
 # before running any of the following instructions cd into bloombergBridge
 
 
 # Set up - to be run once after you first checkout the code
 
-1. Install: https://sourceforge.net/projects/pywin32/files/pywin32/Build%20220/
-2. select pywin for python3.5, and download it
-3. open the file, select run and click the next boxes to install.
 
 1. Clone the bloombergBridge repo.
 2. cd into bloombergBridge.
