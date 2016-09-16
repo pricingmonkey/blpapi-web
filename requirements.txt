@@ -1,1 +1,1 @@
--e https://github.com/filmackay/blpapi-py
+-e git+https://github.com/filmackay/blpapi-py

@@ -3,30 +3,53 @@
 This module pulls price information from external data providers (eg. Bloomberg).
 Runs on Python >= 3.4.
 
-# Set up
+# installation and deployment can only be done on windows.
+
+# use windows powershell to run any of the following instructions.
+# You need powersheel3
+
+# install scoop (the following command can be found at scoop.sh)
+1. Run: set-executionpolicy unrestricted -s cu
+2. Run: iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
+3. Run: scoop install python
+4. you may need to click an OK on a windows pop-up.
+
+# incase you have two version of python installed see this link on how to
+# switch into the one you need:
+# https://github.com/lukesampson/scoop/wiki/Switching-Ruby-and-Python-Versions
+
+
+# first time use:
+
+1. Clone the bloombergBridge repo.
+2. cd into bloombergBridge.
+3. pip install virtualenv
+3. create virtual env with: virtualenv venv
+4. run: souce venv/bin/activate
+5. run: pip install -r requirements.txt
+
+
+# before running any of the following instructions cd into bloombergBridge
+
+
+# Set up - to be run once after you first checkout the code
 
 1. Install: https://sourceforge.net/projects/pywin32/files/pywin32/Build%20220/
-2. Run:
+2. select pywin for python3.5, and download it
+3. open the file, select run and click the next boxes to install.
 
-    virtualenv -p python3 ./venv
-    source ./venv/bin/activate
-    pip install -i requirements.txt
+1. Clone the bloombergBridge repo.
+2. cd into bloombergBridge.
+3. create virtual env with: virtualenv venv
+4. run: souce venv/Scripts/activate
+5. run: pip install -i requirements.txt
 
-# Run tests
 
-    pytest
 
-# Run
+2. Run: pip install -i requirements.txt
+kh
 
-Run server (only on Windows with Bloomberg connection):
-
-    python server.py
-
-Run mock server:
-
-    python server.py mock
-
-# Developer installation
+# Developer installation - don't need to run this to deploy
 
     python .\windows-service.py --startup auto install
 
