@@ -215,11 +215,11 @@ class handler(BaseHTTPRequestHandler):
                 raise
 
             try:
+                response = requestLatest(securities, fields)
                 self.send_response(200)
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.send_header("Content-type", "application/json")
                 self.end_headers()
-                response = requestLatest(securities, fields)
                 self.wfile.write(json.dumps(response).encode())
             except Exception as e:
                 self.send_response(500)
@@ -260,6 +260,7 @@ class handler(BaseHTTPRequestHandler):
 
             session = None
             try:
+                response = requestHistorical(securities, fields, startDate, endDate)
                 self.send_response(200)
                 self.send_header('Etag', etag)
                 self.send_header('Cache-Control', "max-age=86400, must-revalidate")
@@ -267,7 +268,6 @@ class handler(BaseHTTPRequestHandler):
                 self.send_header("Content-type", "application/json")
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
-                response = requestHistorical(securities, fields, startDate, endDate)
                 self.wfile.write(json.dumps(response).encode())
             except Exception as e:
                 self.send_response(500)

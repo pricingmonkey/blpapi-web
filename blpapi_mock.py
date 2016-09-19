@@ -37,14 +37,16 @@ class Request:
                 }) for security in self.params["securities"]])
             })
         if self.serviceType == "HistoricalDataRequest":
+            startDate = datetime.strptime(self.params["startDate"], "%Y%m%d")
+            endDate = datetime.strptime(self.params["endDate"], "%Y%m%d")
             return Message({
                 "securityData": List([Map({
                     "security": security,
                     "fieldData": List([
                         Map(merge_dicts(
-                            { "date": (datetime.strptime("20160917", "%Y%m%d") + timedelta(days=i)).strftime("%Y-%m-%d")},
+                            { "date": (startDate + timedelta(days=i)).strftime("%Y-%m-%d")},
                             { field: str(90 + (0.5 - random.random())) for field in self.params["fields"] }
-                        )) for i in range(365)])
+                        )) for i in range((endDate - startDate).days + 1)])
                     }) for security in self.params["securities"]])
                 })
 
