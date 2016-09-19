@@ -42,7 +42,7 @@ class Request:
                     "security": security,
                     "fieldData": List([
                         Map(merge_dicts(
-                            { "date": (datetime.strptime("20060201", "%Y%m%d") + timedelta(days=i)).strftime("%Y-%m-%d")},
+                            { "date": (datetime.strptime("20160917", "%Y%m%d") + timedelta(days=i)).strftime("%Y-%m-%d")},
                             { field: str(90 + (0.5 - random.random())) for field in self.params["fields"] }
                         )) for i in range(365)])
                     }) for security in self.params["securities"]])
