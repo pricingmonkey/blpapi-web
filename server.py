@@ -1,5 +1,7 @@
-import hashlib
+from socketserver import ThreadingMixIn
 from http.server import BaseHTTPRequestHandler,HTTPServer
+import threading
+import hashlib
 from urllib.parse import parse_qs,urlparse
 import json
 import sys
@@ -278,10 +280,13 @@ class handler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
             self.end_headers()
 
+class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
+    pass
+
 def main():
     try:
         PORT_NUMBER = 6659
-        server = HTTPServer(('localhost', PORT_NUMBER), handler)
+        server = ThreadingSimpleServer(('localhost', PORT_NUMBER), handler)
         print("Server started on port {}".format(PORT_NUMBER))
 
         server.serve_forever()
