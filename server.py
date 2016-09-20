@@ -1,4 +1,3 @@
-from socketserver import ThreadingMixIn
 from http.server import BaseHTTPRequestHandler,HTTPServer
 import threading
 import hashlib
@@ -124,10 +123,8 @@ def extractErrors(message):
     print("extractErrors output: {}".format(result))
     return result
 
-def requestLatest(securities, fields):
-    session = None
+def requestLatest(session, securities, fields):
     try:
-        session = openBloombergSession()
         refDataService = openBloombergService(session, "//blp/refdata")
         request = refDataService.createRequest("ReferenceDataRequest")
 
@@ -150,14 +147,9 @@ def requestLatest(securities, fields):
         return { "response": securityPricing, "errors": errors }
     except Exception as e:
         raise
-    finally:
-        if session is not None:
-            session.stop()
 
-def requestHistorical(securities, fields, startDate, endDate):
-    session = None
+def requestHistorical(session, securities, fields, startDate, endDate):
     try:
-        session = openBloombergSession()
         refDataService = openBloombergService(session, "//blp/refdata")
         request = refDataService.createRequest("HistoricalDataRequest")
 
@@ -184,9 +176,6 @@ def requestHistorical(securities, fields, startDate, endDate):
         return { "response": securityPricing, "errors": errors }
     except Exception as e:
         raise
-    finally:
-        if session is not None:
-            session.stop()
 
 def allowCORS(host):
     HOSTS = ["http://pricingmonkey.com", "http://localhost:8080"]
@@ -201,6 +190,7 @@ def generateEtag(obj):
     return '"{}"'.format(sha1.hexdigest())
 
 class handler(BaseHTTPRequestHandler):
+    session = None
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
@@ -222,18 +212,19 @@ class handler(BaseHTTPRequestHandler):
                 raise
 
             try:
-                response = requestLatest(securities, fields)
-                self.send_response(200)
-                self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps(response).encode())
+                response = requestLatest(self.session, securities, fields)
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
                 self.wfile.write("{0}".format(e).encode())
                 raise
+
+            self.send_response(200)
+            self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(response).encode())
 
         # /historical?fields=[...]&securities=[...]
         elif self.path.startswith("/historical"):
@@ -265,41 +256,42 @@ class handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 return
 
-            session = None
             try:
-                response = requestHistorical(securities, fields, startDate, endDate)
-                self.send_response(200)
-                self.send_header('Etag', etag)
-                self.send_header('Cache-Control', "max-age=86400, must-revalidate")
-                self.send_header("Vary", "Origin")
-                self.send_header("Content-type", "application/json")
-                self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
-                self.end_headers()
-                self.wfile.write(json.dumps(response).encode())
+                response = requestHistorical(self.session, securities, fields, startDate, endDate)
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
                 self.wfile.write("{0}".format(e).encode())
                 raise
+
+            self.send_response(200)
+            self.send_header('Etag', etag)
+            self.send_header('Cache-Control', "max-age=86400, must-revalidate")
+            self.send_header("Vary", "Origin")
+            self.send_header("Content-type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
+            self.end_headers()
+            self.wfile.write(json.dumps(response).encode())
         else:
             self.send_response(404)
             self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
             self.end_headers()
 
-class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
-    pass
-
 def main():
+    session = None
     try:
         PORT_NUMBER = 6659
-        server = ThreadingSimpleServer(('localhost', PORT_NUMBER), handler)
+        handler.session = openBloombergSession()
+        server = HTTPServer(('localhost', PORT_NUMBER), handler)
         print("Server started on port {}".format(PORT_NUMBER))
 
         server.serve_forever()
     except KeyboardInterrupt:
         print('^C received, shutting down the web server')
     finally:
+        if session is not None:
+            session.stop()
         server.socket.close()
 
 if __name__ == "__main__":
