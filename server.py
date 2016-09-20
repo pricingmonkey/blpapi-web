@@ -7,6 +7,9 @@ import json
 import sys
 import traceback
 
+from raven import Client
+client = Client('https://ec16b2b639e642e49c59e922d2c7dc9b:2dd38313e1d44fd2bc2adb5a510639fc@sentry.io/100358')
+
 BLOOMBERG_HOST = "localhost"
 BLOOMBERG_PORT = 8194
 
@@ -215,6 +218,7 @@ class handler(BaseHTTPRequestHandler):
                 securities = query.get('security') or []
                 fields = query.get('field') or []
             except Exception as e:
+                client.captureException()
                 self.send_response(400)
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
@@ -229,6 +233,7 @@ class handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps(response).encode())
             except Exception as e:
+                client.captureException()
                 self.send_response(500)
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
@@ -247,6 +252,7 @@ class handler(BaseHTTPRequestHandler):
                 if endDate is not None:
                     endDate = endDate[0]
             except Exception as e:
+                client.captureException()
                 self.send_response(400)
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
@@ -277,6 +283,7 @@ class handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps(response).encode())
             except Exception as e:
+                client.captureException()
                 self.send_response(500)
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
