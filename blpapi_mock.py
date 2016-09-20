@@ -28,14 +28,34 @@ class Request:
 
     def message(self):
         if self.serviceType == "ReferenceDataRequest":
+            correctSecurities, incorrectSecurities = [], []
+
+            for s in self.params["securities"]:
+                if s.endswith("ERR"):
+                    incorrectSecurities.append(s)
+                else:
+                    correctSecurities.append(s)
             return Message({
                 "securityData": List([Map({
                     "security": security,
                     "fieldData": Map({
                         field:  str(90 + (0.5 - random.random()))
                     for field in self.params["fields"]})
-                }) for security in self.params["securities"]])
-            })
+                }) for security in correctSecurities] + [
+                    Map({
+                        "security": security,
+                        "fieldData": Map({}),
+                        "fieldExceptions": List([Map({
+                                "errorInfo": Map({
+                                    "category": "CAT",
+                                    "subcategory": "SUBCAT",
+                                    "message": "MSG"
+                                }),
+                                "fieldId": "FIELD_ID",
+                                "message": "MESSAGE"
+                        })])
+                }) for security in incorrectSecurities]
+            )})
         if self.serviceType == "HistoricalDataRequest":
             startDate = datetime.strptime(self.params["startDate"], "%Y%m%d")
             endDate = datetime.strptime(self.params["endDate"], "%Y%m%d")
