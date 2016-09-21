@@ -38,26 +38,40 @@ Run:
     pip install virtualenv
     virtualenv venv
     source venv/bin/activate
-    pip install -r requirements.txt
+    pip install -r requirements-dev.txt -r requirements.txt -r requirements-deploy.txt
 
-# Developer installation - don't need to run this to deploy
+# Run (development instructions)
+
+## Server in terminal mode
+
+    python .\server.py mock
+
+## Windows service in background mode
 
     python .\windows-service.py --startup auto install
 
-# Deployment
+# Deploy
+
+## Build into Windows executable
 
     cp $PYTHON_HOME/lib/site-packages/blpapi/_internals.pyd .
     python setup.py py2exe
 
 Contents of build\exe.win-amd64-3.4 needs to be zipped.
 
-# Manual user installation
+## Install manually
 
-1. Install: https://www.microsoft.com/en-us/download/details.aspx?id=48145
-2. Run
+1. Unzip deployment package on the user's computer.
+2. Go to URL and install: https://www.microsoft.com/en-us/download/details.aspx?id=48145
+3. Go to a directory where deployment package was unzipped and run:
 
-    pmbb-service.exe --startup auto install
-    pmbb-service.exe start
+    run-service.exe --startup auto install
+    run-service.exe start
+
+* In order to debug you can run the server in terminal mode as well (make sure Windows
+service is stopped, otherwise this will not work):
+
+    run.exe
 
 # Automatic user installation
 
@@ -65,4 +79,11 @@ TBD (use Inno setup and pmbb.iss file as input)
 
 # Mac
 
-TBD
+# First time use (run once after checking out the code)
+
+Run:
+
+    pip install virtualenv
+    virtualenv venv
+    source venv/bin/activate
+    pip install -r requirements-dev.txt -r requirements.txt
