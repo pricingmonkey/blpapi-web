@@ -22,12 +22,13 @@ service = Target(
 )
 
 setup(
+    data_files = [('./certifi', ['./certifi/cacert.pem'])],
     options = {
         "py2exe": {
             "compressed": True, 
             "bundle_files": 3, 
             "includes": ["_internals"],
-            "packages": ["encodings"]
+            "packages": ["encodings", "raven"]
         }},
         console=[standalone_server],
     service=[service]
