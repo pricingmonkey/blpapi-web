@@ -27,6 +27,23 @@ class Request:
             self.params[name] = []
         self.params[name].append(value)
 
+    def __randomFieldValue(self, field):
+        if field == "FUT_CTD_CPN":
+            return "1.000"
+        elif field == "FUT_CTD_MTY":
+            return "08/15/2025"
+        elif field == "FUT_CTD_FREQ":
+            return "A"
+        elif field == "FUT_DLV_DT_LAST":
+            return "12/12/2016"
+        elif field == "FUT_CNVS_FACTOR":
+            return ".669312"
+        else:
+            return str(99 + (0.05 * random.random()))
+
+    def __isWeekday(self, date):
+        return date.isoweekday() <= 5
+
     def messages(self):
         if self.serviceType == "ReferenceDataRequest":
             time.sleep(0.5)
@@ -41,7 +58,7 @@ class Request:
                 "securityData": List([Map({
                     "security": security,
                     "fieldData": Map({
-                        field:  str(90 + (0.5 - random.random()))
+                        field: self.__randomFieldValue(field) 
                     for field in self.params["fields"]})
                 }) for security in correctSecurities] + [
                     Map({
@@ -67,9 +84,9 @@ class Request:
                     "security": security,
                     "fieldData": List([
                         Map(merge_dicts(
-                            { "date": startDate + timedelta(days=i)},
-                            { field: str(90 + (0.5 - random.random())) for field in self.params["fields"] }
-                        )) for i in range((endDate - startDate).days + 1)])
+                            { "date": date},
+                            { field: self.__randomFieldValue(field) for field in self.params["fields"] }
+                        )) for date in [startDate + timedelta(days=i) for i in range((endDate - startDate).days + 1)] if self.__isWeekday(date)])
                     })
                 }) for security in self.params["securities"]]
 

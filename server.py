@@ -219,7 +219,8 @@ class handler(BaseHTTPRequestHandler):
                 securities = query.get('security') or []
                 fields = query.get('field') or []
             except Exception as e:
-                client.captureException()
+                if client is not None:
+                    client.captureException()
                 self.send_response(400)
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
@@ -229,7 +230,8 @@ class handler(BaseHTTPRequestHandler):
             try:
                 response = requestLatest(self.session, securities, fields)
             except Exception as e:
-                client.captureException()
+                if client is not None:
+                    client.captureException()
                 self.send_response(500)
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
@@ -254,7 +256,8 @@ class handler(BaseHTTPRequestHandler):
                 if endDate is not None:
                     endDate = endDate[0]
             except Exception as e:
-                client.captureException()
+                if client is not None:
+                    client.captureException()
                 self.send_response(400)
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
@@ -276,7 +279,8 @@ class handler(BaseHTTPRequestHandler):
             try:
                 response = requestHistorical(self.session, securities, fields, startDate, endDate)
             except Exception as e:
-                client.captureException()
+                if client is not None:
+                    client.captureException()
                 self.send_response(500)
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
@@ -318,6 +322,7 @@ if __name__ == "__main__":
     if len(sys.argv) >= 2 and sys.argv[1] == "mock":
         print("Using blpapi_mock")
         import blpapi_mock as blpapi
+        client = None
     else:
         import blpapi
 
