@@ -46,7 +46,7 @@ class Request:
 
     def messages(self):
         if self.serviceType == "ReferenceDataRequest":
-            time.sleep(0.5)
+            time.sleep(random.randint(2, 6) / 10)
             correctSecurities, incorrectSecurities = [], []
 
             for s in self.params["securities"]:
@@ -76,7 +76,7 @@ class Request:
                 }) for security in incorrectSecurities]
             )})]
         if self.serviceType == "HistoricalDataRequest":
-            time.sleep(2)
+            time.sleep(random.randint(4, 8) / 10)
             startDate = datetime.strptime(self.params["startDate"], "%Y%m%d").date()
             endDate = datetime.strptime(self.params["endDate"], "%Y%m%d").date()
             return [Message({
