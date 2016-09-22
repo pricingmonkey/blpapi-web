@@ -1,10 +1,24 @@
+import imp, os, sys
 from http.server import BaseHTTPRequestHandler,HTTPServer
 import threading
 import hashlib
 from urllib.parse import parse_qs,urlparse
 import json
-import sys
 import traceback
+
+def main_is_frozen():
+   return (hasattr(sys, "frozen") or # new py2exe
+           hasattr(sys, "importers") # old py2exe
+           or imp.is_frozen("__main__")) # tools/freeze
+
+def get_main_dir():
+   if main_is_frozen():
+       return os.path.dirname(sys.executable)
+   return os.path.dirname(os.path.realpath(__file__))
+
+from raven.transport.threaded_requests import ThreadedRequestsHTTPTransport
+from raven import Client
+client = Client("https://ec16b2b639e642e49c59e922d2c7dc9b:2dd38313e1d44fd2bc2adb5a510639fc@sentry.io/100358?ca_certs={}/certifi/cacert.pem".format(get_main_dir()))
 
 BLOOMBERG_HOST = "localhost"
 BLOOMBERG_PORT = 8194
@@ -205,6 +219,7 @@ class handler(BaseHTTPRequestHandler):
                 securities = query.get('security') or []
                 fields = query.get('field') or []
             except Exception as e:
+                client.captureException()
                 self.send_response(400)
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
@@ -214,6 +229,7 @@ class handler(BaseHTTPRequestHandler):
             try:
                 response = requestLatest(self.session, securities, fields)
             except Exception as e:
+                client.captureException()
                 self.send_response(500)
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
@@ -238,6 +254,7 @@ class handler(BaseHTTPRequestHandler):
                 if endDate is not None:
                     endDate = endDate[0]
             except Exception as e:
+                client.captureException()
                 self.send_response(400)
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()
@@ -259,6 +276,7 @@ class handler(BaseHTTPRequestHandler):
             try:
                 response = requestHistorical(self.session, securities, fields, startDate, endDate)
             except Exception as e:
+                client.captureException()
                 self.send_response(500)
                 self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
                 self.end_headers()

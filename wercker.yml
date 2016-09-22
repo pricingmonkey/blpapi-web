@@ -10,9 +10,12 @@ build:
     - pip-install:
         requirements_file: "requirements-dev.txt"
 
+    - pip-install:
+        requirements_file: "requirements.txt"
+
     - script:
         name: pytest
-        code: pytest
+        code: python -m pytest
 
   after-steps:
       - slack-notifier:
