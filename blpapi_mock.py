@@ -26,7 +26,7 @@ class Request:
             self.params[name] = []
         self.params[name].append(value)
 
-    def message(self):
+    def messages(self):
         if self.serviceType == "ReferenceDataRequest":
             correctSecurities, incorrectSecurities = [], []
 
@@ -35,7 +35,7 @@ class Request:
                     incorrectSecurities.append(s)
                 else:
                     correctSecurities.append(s)
-            return Message({
+            return [Message({
                 "securityData": List([Map({
                     "security": security,
                     "fieldData": Map({
@@ -55,11 +55,11 @@ class Request:
                                 "message": "MESSAGE"
                         })])
                 }) for security in incorrectSecurities]
-            )})
+            )})]
         if self.serviceType == "HistoricalDataRequest":
             startDate = datetime.strptime(self.params["startDate"], "%Y%m%d").date()
             endDate = datetime.strptime(self.params["endDate"], "%Y%m%d").date()
-            return Message({
+            return [Message({
                 "securityData": Map({
                     "security": security,
                     "fieldData": List([
@@ -67,8 +67,8 @@ class Request:
                             { "date": startDate + timedelta(days=i)},
                             { field: str(90 + (0.5 - random.random())) for field in self.params["fields"] }
                         )) for i in range((endDate - startDate).days + 1)])
-                    }) for security in self.params["securities"]
-                })
+                    })
+                }) for security in self.params["securities"]]
 
 class Service:
     def createRequest(self, serviceType):
@@ -189,7 +189,7 @@ class Session:
         return Service()
 
     def sendRequest(self, request):
-        self.responses = [Event([request.message()])]
+        self.responses = [Event(request.messages())]
 
     def nextEvent(self, timeout):
         try:
