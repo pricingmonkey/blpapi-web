@@ -57,14 +57,14 @@ class Request:
                 }) for security in incorrectSecurities]
             )})
         if self.serviceType == "HistoricalDataRequest":
-            startDate = datetime.strptime(self.params["startDate"], "%Y%m%d")
-            endDate = datetime.strptime(self.params["endDate"], "%Y%m%d")
+            startDate = datetime.strptime(self.params["startDate"], "%Y%m%d").date()
+            endDate = datetime.strptime(self.params["endDate"], "%Y%m%d").date()
             return Message({
                 "securityData": Map({
                     "security": security,
                     "fieldData": List([
                         Map(merge_dicts(
-                            { "date": (startDate + timedelta(days=i)).strftime("%Y-%m-%d")},
+                            { "date": startDate + timedelta(days=i)},
                             { field: str(90 + (0.5 - random.random())) for field in self.params["fields"] }
                         )) for i in range((endDate - startDate).days + 1)])
                     }) for security in self.params["securities"]
@@ -107,6 +107,9 @@ class List:
     def __init__(self, items):
         self.items = items
 
+    def isArray(self):
+        return True
+
     def values(self):
         return self.items
 
@@ -133,6 +136,9 @@ class Map:
 
     def __init__(self, value):
         self.value = value
+
+    def isArray(self):
+        return False
 
     def hasElement(self, name):
         return name in self.value

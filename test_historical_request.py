@@ -1,6 +1,7 @@
 from server import extractHistoricalSecurityPricing, extractErrors
 from blpapi_mock import *
 import pytest
+import datetime
 
 def test_simple():
     message = Message({
@@ -8,11 +9,11 @@ def test_simple():
             "security": "L Z7 Comdty",
             "fieldData": List([
                 Map({
-                    "date": "2006-01-31",
+                    "date": datetime.date(2006, 1, 31),
                     "PX_LAST": 90
                 }),
                 Map({
-                    "date": "2006-02-01",
+                    "date": datetime.date(2006, 2, 1),
                     "PX_LAST": 90.05
                 })
             ])
@@ -29,7 +30,7 @@ def test_extract_multiple_fields():
             "security": "L Z7 Comdty",
             "fieldData": List([
                 Map({
-                    "date": "2006-01-31",
+                    "date": datetime.date(2006, 1, 31),
                     "PX_LAST": 90,
                     "ASK": 90
                 })

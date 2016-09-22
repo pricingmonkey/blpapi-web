@@ -126,7 +126,11 @@ def extractErrors(message):
     if message.hasElement("responseError"): 
         result.append(extractError(message.getElement("responseError")))
     if message.hasElement("securityData"): 
-        for securityInformation in list(message.getElement("securityData").values()):
+        if message.getElement("securityData").isArray():
+           securityData = list(message.getElement("securityData").values()) 
+        else:
+           securityData = list([message.getElement("securityData")]) 
+        for securityInformation in securityData:
             if securityInformation.hasElement("fieldExceptions"):
                 for fieldException in list(securityInformation.getElement("fieldExceptions").values()):
                     error = extractError(fieldException.getElement("errorInfo"))
