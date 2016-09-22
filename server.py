@@ -16,10 +16,6 @@ def get_main_dir():
        return os.path.dirname(sys.executable)
    return os.path.dirname(os.path.realpath(__file__))
 
-from raven.transport.threaded_requests import ThreadedRequestsHTTPTransport
-from raven import Client
-client = Client("https://ec16b2b639e642e49c59e922d2c7dc9b:2dd38313e1d44fd2bc2adb5a510639fc@sentry.io/100358?ca_certs={}/certifi/cacert.pem".format(get_main_dir()))
-
 BLOOMBERG_HOST = "localhost"
 BLOOMBERG_PORT = 8194
 
@@ -324,5 +320,9 @@ if __name__ == "__main__":
         import blpapi_mock as blpapi
     else:
         import blpapi
+
+        from raven.transport.threaded_requests import ThreadedRequestsHTTPTransport
+        from raven import Client
+        client = Client("https://ec16b2b639e642e49c59e922d2c7dc9b:2dd38313e1d44fd2bc2adb5a510639fc@sentry.io/100358?ca_certs={}/certifi/cacert.pem".format(get_main_dir()))
     main()
 
