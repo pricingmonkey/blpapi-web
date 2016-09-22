@@ -76,26 +76,26 @@ def extractHistoricalSecurityPricing(message):
 
     resultsForDate = {}
     if message.hasElement("securityData"): 
-        for securityInformation in list(message.getElement("securityData").values()):
-            security = securityInformation.getElementValue("security")
-            for fieldsOnDate in securityInformation.getElement("fieldData").values():
-                fields = []
-                for fieldElement in fieldsOnDate.elements():
-                    if str(fieldElement.name()) == "date":
-                        date = fieldElement.getValue()
-                    elif str(fieldElement.name()) == "relativeDate":
-                        pass
-                    else: # assume it's the {fieldName -> fieldValue}
-                        fields.append({
-                            "name": str(fieldElement.name()),
-                            "value": fieldElement.getValue()
-                        })
-                if not date in resultsForDate:
-                    resultsForDate[date] = {}
-                if not security in resultsForDate[date]:
-                    resultsForDate[date][security] = []
-                for field in fields:
-                    resultsForDate[date][security].append(field)
+        securityInformation = message.getElement("securityData")
+        security = securityInformation.getElementValue("security")
+        for fieldsOnDate in list(securityInformation.getElement("fieldData").values()):
+            fields = []
+            for fieldElement in fieldsOnDate.elements():
+                if str(fieldElement.name()) == "date":
+                    date = fieldElement.getValueAsString()
+                elif str(fieldElement.name()) == "relativeDate":
+                    pass
+                else: # assume it's the {fieldName -> fieldValue}
+                    fields.append({
+                        "name": str(fieldElement.name()),
+                        "value": fieldElement.getValue()
+                    })
+            if not date in resultsForDate:
+                resultsForDate[date] = {}
+            if not security in resultsForDate[date]:
+                resultsForDate[date][security] = []
+            for field in fields:
+                resultsForDate[date][security].append(field)
 
     print("extractHistoricalSecurityPricing preprocessed: {}".format(resultsForDate))
 
@@ -298,6 +298,7 @@ class handler(BaseHTTPRequestHandler):
 
 def main():
     session = None
+    server = None
     try:
         PORT_NUMBER = 6659
         handler.session = openBloombergSession()
@@ -310,7 +311,8 @@ def main():
     finally:
         if session is not None:
             session.stop()
-        server.socket.close()
+        if server is not None:
+            server.socket.close()
 
 if __name__ == "__main__":
     if len(sys.argv) >= 2 and sys.argv[1] == "mock":

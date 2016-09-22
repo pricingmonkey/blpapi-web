@@ -60,14 +60,14 @@ class Request:
             startDate = datetime.strptime(self.params["startDate"], "%Y%m%d")
             endDate = datetime.strptime(self.params["endDate"], "%Y%m%d")
             return Message({
-                "securityData": List([Map({
+                "securityData": Map({
                     "security": security,
                     "fieldData": List([
                         Map(merge_dicts(
                             { "date": (startDate + timedelta(days=i)).strftime("%Y-%m-%d")},
                             { field: str(90 + (0.5 - random.random())) for field in self.params["fields"] }
                         )) for i in range((endDate - startDate).days + 1)])
-                    }) for security in self.params["securities"]])
+                    }) for security in self.params["securities"]
                 })
 
 class Service:
@@ -127,6 +127,9 @@ class Map:
 
         def getValue(self):
             return self.value
+
+        def getValueAsString(self):
+            return str(self.value)
 
     def __init__(self, value):
         self.value = value

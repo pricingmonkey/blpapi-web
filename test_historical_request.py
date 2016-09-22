@@ -4,7 +4,7 @@ import pytest
 
 def test_simple():
     message = Message({
-        "securityData": List([Map({
+        "securityData": Map({
             "security": "L Z7 Comdty",
             "fieldData": List([
                 Map({
@@ -16,7 +16,7 @@ def test_simple():
                     "PX_LAST": 90.05
                 })
             ])
-        })])
+        })
     })
     response = extractHistoricalSecurityPricing(message)
     assert len(response) == 2
@@ -25,7 +25,7 @@ def test_simple():
 
 def test_extract_multiple_fields():
     message = Message({
-        "securityData": List([Map({
+        "securityData": Map({
             "security": "L Z7 Comdty",
             "fieldData": List([
                 Map({
@@ -34,7 +34,7 @@ def test_extract_multiple_fields():
                     "ASK": 90
                 })
             ])
-        })])
+        })
     })
     response = extractHistoricalSecurityPricing(message)
     print(response)
