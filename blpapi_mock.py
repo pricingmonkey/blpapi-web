@@ -1,4 +1,5 @@
 import random
+import time
 from datetime import datetime, timedelta
 
 def merge_dicts(d1, d2):
@@ -28,6 +29,7 @@ class Request:
 
     def messages(self):
         if self.serviceType == "ReferenceDataRequest":
+            time.sleep(0.5)
             correctSecurities, incorrectSecurities = [], []
 
             for s in self.params["securities"]:
@@ -57,6 +59,7 @@ class Request:
                 }) for security in incorrectSecurities]
             )})]
         if self.serviceType == "HistoricalDataRequest":
+            time.sleep(2)
             startDate = datetime.strptime(self.params["startDate"], "%Y%m%d").date()
             endDate = datetime.strptime(self.params["endDate"], "%Y%m%d").date()
             return [Message({
