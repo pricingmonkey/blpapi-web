@@ -23,6 +23,7 @@ def openBloombergSession():
     sessionOptions = blpapi.SessionOptions()
     sessionOptions.setServerHost(BLOOMBERG_HOST)
     sessionOptions.setServerPort(BLOOMBERG_PORT)
+    sessionOptions.setAutoRestartOnDisconnection(True)
 
     session = blpapi.Session(sessionOptions)
 
