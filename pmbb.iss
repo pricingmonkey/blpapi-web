@@ -27,4 +27,4 @@ Filename: {tmp}\vc_redist.x64.exe; Parameters: "/q /passive /Q:a /c:""msiexec /q
 
 [Run]
 Filename: "{app}\run-service.exe"; WorkingDir: "{app}"; Parameters: "--startup auto install"; Flags: runhidden
-Filename: "{app}\run-service.exe"; WorkingDir: "{app}"; Parameters: "start"; Flags: runhidden
+Filename: "{app}\run-service.exe"; WorkingDir: "{app}"; Parameters: "restart"; Flags: runhidden

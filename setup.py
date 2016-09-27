@@ -28,7 +28,7 @@ setup(
             "compressed": True, 
             "bundle_files": 3, 
             "includes": ["_internals"],
-            "packages": ["encodings", "raven"]
+            "packages": ["blpapi", "encodings", "raven"]
         }},
         console=[standalone_server],
     service=[service]

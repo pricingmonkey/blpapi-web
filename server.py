@@ -302,6 +302,15 @@ class handler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
             self.end_headers()
 
+def wireUpProductionDependencies():
+    global blpapi
+    global client
+    import blpapi
+
+    from raven.transport.threaded_requests import ThreadedRequestsHTTPTransport
+    from raven import Client
+    client = Client("https://ec16b2b639e642e49c59e922d2c7dc9b:2dd38313e1d44fd2bc2adb5a510639fc@sentry.io/100358?ca_certs={}/certifi/cacert.pem".format(get_main_dir()))
+
 def main():
     session = None
     server = None
@@ -325,16 +334,16 @@ def main():
         if server is not None:
             server.socket.close()
 
+if main_is_frozen():
+    wireUpProductionDependencies()
+
 if __name__ == "__main__":
     if len(sys.argv) >= 2 and sys.argv[1] == "mock":
         print("Using blpapi_mock")
         import blpapi_mock as blpapi
         client = None
     else:
-        import blpapi
-
-        from raven.transport.threaded_requests import ThreadedRequestsHTTPTransport
-        from raven import Client
-        client = Client("https://ec16b2b639e642e49c59e922d2c7dc9b:2dd38313e1d44fd2bc2adb5a510639fc@sentry.io/100358?ca_certs={}/certifi/cacert.pem".format(get_main_dir()))
+        wireUpProductionDependencies()
     main()
+
 
