@@ -204,7 +204,27 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write("".encode())
 
+    def respond400(self, e):
+        self.send_response(400)
+        self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
+        self.end_headers()
+        self.wfile.write("{0}".format(e).encode())
+
+    def respond500(self, e):
+        self.send_response(500)
+        self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
+        self.end_headers()
+        self.wfile.write("{0}".format(e).encode())
+
     def do_GET(self):
+        if self.session is None:
+            try:
+                handler.session = openBloombergSession()
+            except Exception as e:
+                if client is not None:
+                    client.captureException()
+                self.respond500(e)
+                raise
         query = parse_qs(urlparse(self.path).query)
         # /latest?field=...&field=...&security=...&security=...
         if self.path.startswith("/latest"):
@@ -214,10 +234,7 @@ class handler(BaseHTTPRequestHandler):
             except Exception as e:
                 if client is not None:
                     client.captureException()
-                self.send_response(400)
-                self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
-                self.end_headers()
-                self.wfile.write("{0}".format(e).encode())
+                self.respond400(e)
                 raise
 
             try:
@@ -225,10 +242,7 @@ class handler(BaseHTTPRequestHandler):
             except Exception as e:
                 if client is not None:
                     client.captureException()
-                self.send_response(500)
-                self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
-                self.end_headers()
-                self.wfile.write("{0}".format(e).encode())
+                self.respond500(e)
                 raise
 
             self.send_response(200)
@@ -251,10 +265,7 @@ class handler(BaseHTTPRequestHandler):
             except Exception as e:
                 if client is not None:
                     client.captureException()
-                self.send_response(400)
-                self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
-                self.end_headers()
-                self.wfile.write("{0}".format(e).encode())
+                self.respond400(e)
                 raise
 
             etag = generateEtag({
@@ -274,10 +285,7 @@ class handler(BaseHTTPRequestHandler):
             except Exception as e:
                 if client is not None:
                     client.captureException()
-                self.send_response(500)
-                self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
-                self.end_headers()
-                self.wfile.write("{0}".format(e).encode())
+                self.respond500(e)
                 raise
 
             self.send_response(200)
@@ -298,7 +306,12 @@ def main():
     server = None
     try:
         PORT_NUMBER = 6659
-        handler.session = openBloombergSession()
+        try:
+            handler.session = openBloombergSession()
+        except:
+            if client is not None:
+                client.captureException()
+            pass
         server = HTTPServer(('localhost', PORT_NUMBER), handler)
         print("Server started on port {}".format(PORT_NUMBER))
 
