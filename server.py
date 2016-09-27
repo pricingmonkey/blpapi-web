@@ -68,8 +68,6 @@ def extractReferenceSecurityPricing(message):
     return result
 
 def extractHistoricalSecurityPricing(message):
-    print("extractHistoricalSecurityPricing input: {}".format(message))
-
     resultsForDate = {}
     if message.hasElement("securityData"): 
         securityInformation = message.getElement("securityData")
@@ -93,8 +91,6 @@ def extractHistoricalSecurityPricing(message):
             for field in fields:
                 resultsForDate[date][security].append(field)
 
-    print("extractHistoricalSecurityPricing preprocessed: {}".format(resultsForDate))
-
     result = []
     for date, securities in resultsForDate.items():
         valuesForSecurities = []
@@ -107,7 +103,6 @@ def extractHistoricalSecurityPricing(message):
             "date": date,
             "values": valuesForSecurities
         })
-    print("extractHistoricalSecurityPricing output: {}".format(result))
     return sorted(result, key=lambda each: each["date"])
 
 def extractError(errorElement):
@@ -118,7 +113,6 @@ def extractError(errorElement):
 
 def extractErrors(message):
     result = []
-    print("extractErrors input: {}".format(message))
     if message.hasElement("responseError"): 
         result.append(extractError(message.getElement("responseError")))
     if message.hasElement("securityData"): 
@@ -134,7 +128,6 @@ def extractErrors(message):
             if securityInformation.hasElement("securityError"):
                 error = extractError(securityInformation.getElement("securityError"))
                 result.append("{}: {}".format(error, securityInformation.getElementValue("security")))
-    print("extractErrors output: {}".format(result))
     return result
 
 def requestLatest(session, securities, fields):
