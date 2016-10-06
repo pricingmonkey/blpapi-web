@@ -1,10 +1,12 @@
 import imp, os, sys
-from http.server import BaseHTTPRequestHandler,HTTPServer
 import threading
 import hashlib
 from urllib.parse import parse_qs,urlparse
 import json
 import traceback
+
+from flask import Flask, Response, request
+app = Flask(__name__)
 
 def main_is_frozen():
     return (hasattr(sys, "frozen") or # new py2exe
@@ -197,110 +199,107 @@ def generateEtag(obj):
     sha1.update("{}".format(obj).encode())
     return '"{}"'.format(sha1.hexdigest())
 
-class handler(BaseHTTPRequestHandler):
-    session = None
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
-        self.end_headers()
-        self.wfile.write("".encode())
+@app.route('/latest', methods = ['OPTIONS'])
+@app.route('/historical', methods = ['OPTIONS'])
+def tellThemWhenCORSIsAllowed():
+    response = Response("")
+    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    return response
 
-    def respond400(self, e):
-        self.send_response(400)
-        self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
-        self.end_headers()
-        self.wfile.write("{0}".format(e).encode())
+def respond400(e):
+    response = Response("{0}: {1}".format(type(e).__name__, e).encode(), status=400)
+    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    traceback.print_exc()
+    return response
 
-    def respond500(self, e):
-        self.send_response(500)
-        self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
-        self.end_headers()
-        self.wfile.write("{0}".format(e).encode())
+def respond500(e):
+    response = Response("{0}: {1}".format(type(e).__name__, e).encode(), status=500)
+    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    traceback.print_exc()
+    return response
 
-    def do_GET(self):
-        if self.session is None:
-            try:
-                handler.session = openBloombergSession()
-            except Exception as e:
-                if client is not None:
-                    client.captureException()
-                self.respond500(e)
-                raise
-        query = parse_qs(urlparse(self.path).query)
-        # /latest?field=...&field=...&security=...&security=...
-        if self.path.startswith("/latest"):
-            try:
-                securities = query.get('security') or []
-                fields = query.get('field') or []
-            except Exception as e:
-                if client is not None:
-                    client.captureException()
-                self.respond400(e)
-                raise
+# /latest?field=...&field=...&security=...&security=...
+@app.route('/latest', methods = ['GET'])
+def latest():
+    if app.session is None:
+        try:
+            app.session = openBloombergSession()
+        except Exception as e:
+            if client is not None:
+                client.captureException()
+            return respond500(e)
+    try:
+        securities = request.args.getlist('security') or []
+        fields = request.args.getlist('field') or []
+    except Exception as e:
+        if client is not None:
+            client.captureException()
+        return respond400(e)
 
-            try:
-                response = requestLatest(self.session, securities, fields)
-            except Exception as e:
-                if client is not None:
-                    client.captureException()
-                self.respond500(e)
-                raise
+    try:
+        payload = json.dumps(requestLatest(app.session, securities, fields)).encode()
+    except Exception as e:
+        if client is not None:
+            client.captureException()
+        return respond500(e)
 
-            self.send_response(200)
-            self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps(response).encode())
+    response = Response(
+        payload,    
+        status=200,
+        mimetype='application/json')
+    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    return response
 
-        # /historical?fields=[...]&securities=[...]
-        elif self.path.startswith("/historical"):
-            try:
-                securities = query.get('security') or []
-                fields = query.get('field') or []
-                startDate = query.get('startDate')
-                if startDate is not None:
-                    startDate = startDate[0]
-                endDate = query.get('endDate')
-                if endDate is not None:
-                    endDate = endDate[0]
-            except Exception as e:
-                if client is not None:
-                    client.captureException()
-                self.respond400(e)
-                raise
+# /historical?fields=[...]&securities=[...]
+@app.route('/historical', methods = ['GET'])
+def historical():
+    if app.session is None:
+        try:
+            app.session = openBloombergSession()
+        except Exception as e:
+            if client is not None:
+                client.captureException()
+            return respond500(e)
+    try:
+        securities = request.args.getlist('security') or []
+        fields = request.args.getlist('field') or []
+        startDate = request.args.get('startDate')
+        endDate = request.args.get('endDate')
+    except Exception as e:
+        if client is not None:
+            client.captureException()
+        return respond400(e)
 
-            etag = generateEtag({
-                "securities": securities,
-                "fields": fields,
-                "startDate": startDate,
-                "endDate": endDate
-            })
-            if self.headers.get('If-None-Match') == etag:
-                self.send_response(304)
-                self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
-                self.end_headers()
-                return
+    etag = generateEtag({
+        "securities": securities,
+        "fields": fields,
+        "startDate": startDate,
+        "endDate": endDate
+    })
+    print(request.headers.get('If-None-Match'))
+    if request.headers.get('If-None-Match') == etag:
+        response = Response(
+            "",
+            status=304,
+            mimetype='application/json')
+        response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+        return response
+    try:
+        payload = json.dumps(requestHistorical(app.session, securities, fields, startDate, endDate)).encode()
+    except Exception as e:
+        if client is not None:
+            client.captureException()
+        return respond500(e)
 
-            try:
-                response = requestHistorical(self.session, securities, fields, startDate, endDate)
-            except Exception as e:
-                if client is not None:
-                    client.captureException()
-                self.respond500(e)
-                raise
-
-            self.send_response(200)
-            self.send_header('Etag', etag)
-            self.send_header('Cache-Control', "max-age=86400, must-revalidate")
-            self.send_header("Vary", "Origin")
-            self.send_header("Content-type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
-            self.end_headers()
-            self.wfile.write(json.dumps(response).encode())
-        else:
-            self.send_response(404)
-            self.send_header("Access-Control-Allow-Origin", allowCORS(self.headers.get('Origin')))
-            self.end_headers()
+    response = Response(
+        payload,
+        status=200,
+        mimetype='application/json')
+    response.headers['Etag'] = etag
+    response.headers['Cache-Control'] = "max-age=86400, must-revalidate"
+    response.headers['Vary'] = "Origin"
+    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    return response
 
 def wireUpProductionDependencies():
     global blpapi
@@ -312,25 +311,20 @@ def wireUpProductionDependencies():
     client = Client("https://ec16b2b639e642e49c59e922d2c7dc9b:2dd38313e1d44fd2bc2adb5a510639fc@sentry.io/100358?ca_certs={}/certifi/cacert.pem".format(get_main_dir()))
 
 def main():
-    session = None
+    app.session = None
     server = None
     try:
         PORT_NUMBER = 6659
         try:
-            handler.session = openBloombergSession()
+            app.session = openBloombergSession()
         except:
             if client is not None:
                 client.captureException()
             pass
-        server = HTTPServer(('localhost', PORT_NUMBER), handler)
-        print("Server started on port {}".format(PORT_NUMBER))
-
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print('^C received, shutting down the web server')
+        app.run(port = PORT_NUMBER)
     finally:
-        if session is not None:
-            session.stop()
+        if app.session is not None:
+            app.session.stop()
         if server is not None:
             server.socket.close()
 
