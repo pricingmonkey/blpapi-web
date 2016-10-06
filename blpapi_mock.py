@@ -14,6 +14,9 @@ class SessionOptions:
     def setServerPort(self, port):
         pass
 
+    def setAutoRestartOnDisconnection(self, enabled):
+        pass
+
 class Request:
     def __init__(self, serviceType):
         self.params = {}
