@@ -8,6 +8,9 @@ import traceback
 from flask import Flask, Response, request
 app = Flask(__name__)
 
+class BrokenSessionException(Exception):
+    pass
+
 def main_is_frozen():
     return (hasattr(sys, "frozen") or # new py2exe
         hasattr(sys, "importers") # old py2exe
@@ -36,7 +39,7 @@ def openBloombergSession():
 
 def openBloombergService(session, serviceName):
     if not session.openService(serviceName):
-        raise Exception("Failed to open {}".format(serviceName))
+        raise BrokenSessionException("Failed to open {}".format(serviceName))
 
     return session.getService(serviceName)
 
@@ -218,6 +221,12 @@ def respond500(e):
     traceback.print_exc()
     return response
 
+def handleBrokenSession(e):
+    if isinstance(e, BrokenSessionException):
+        if not app.session is None:
+            app.session.stop()
+            app.session = None
+
 # /latest?field=...&field=...&security=...&security=...
 @app.route('/latest', methods = ['GET'])
 def latest():
@@ -225,6 +234,7 @@ def latest():
         try:
             app.session = openBloombergSession()
         except Exception as e:
+            handleBrokenSession(e)
             if client is not None:
                 client.captureException()
             return respond500(e)
@@ -239,6 +249,7 @@ def latest():
     try:
         payload = json.dumps(requestLatest(app.session, securities, fields)).encode()
     except Exception as e:
+        handleBrokenSession(e)
         if client is not None:
             client.captureException()
         return respond500(e)
@@ -257,6 +268,7 @@ def historical():
         try:
             app.session = openBloombergSession()
         except Exception as e:
+            handleBrokenSession(e)
             if client is not None:
                 client.captureException()
             return respond500(e)
@@ -287,6 +299,7 @@ def historical():
     try:
         payload = json.dumps(requestHistorical(app.session, securities, fields, startDate, endDate)).encode()
     except Exception as e:
+        handleBrokenSession(e)
         if client is not None:
             client.captureException()
         return respond500(e)
