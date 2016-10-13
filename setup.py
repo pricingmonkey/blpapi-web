@@ -25,6 +25,7 @@ setup(
     data_files = [('./certifi', ['./certifi/cacert.pem'])],
     options = {
         "py2exe": {
+            "dist_dir": "./build",
             "compressed": True, 
             "bundle_files": 3, 
             "includes": ["_internals"],

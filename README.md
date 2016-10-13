@@ -54,10 +54,14 @@ Run:
 
 ## Build into Windows executable
 
+Make sure you have Inno Setup installed, and the path to Inno Setup
+in the script below is correct.
+
     cp $PYTHON_HOME/lib/site-packages/blpapi/_internals.pyd .
     python setup.py py2exe
+    & 'C:\Program Files (x86)\Inno Setup 5\ISCC.exe' .\pmbb.iss
 
-Contents of build\exe.win-amd64-3.4 needs to be zipped.
+The result is a setup file in "./dist" directory.
 
 ## Install manually
 

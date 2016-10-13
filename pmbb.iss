@@ -6,7 +6,7 @@ DefaultDirName={pf}\Pricing Monkey
 UninstallDisplayIcon={app}\uninstall.exe
 Compression=lzma2
 SolidCompression=yes
-OutputDir=./dist
+OutputDir=.\dist
 OutputBaseFilename=pricing-monkey-setup
 ; "ArchitecturesAllowed=x64" specifies that Setup cannot run on
 ; anything but x64.
@@ -17,7 +17,7 @@ ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 
 [Files]
-Source: "dist/*.*"; DestDir: "{app}"; Flags: recursesubdirs
+Source: "build/*.*"; DestDir: "{app}"; Flags: recursesubdirs
 
 [Files]
 Source: "ext/vc_redist.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
