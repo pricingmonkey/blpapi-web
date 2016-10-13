@@ -39,7 +39,10 @@ def openBloombergSession():
 
 def openBloombergService(session, serviceName):
     if not session.openService(serviceName):
-        raise BrokenSessionException("Failed to open {}".format(serviceName))
+        session.stop()
+        session.start()
+        if not session.openService(serviceName):
+            raise BrokenSessionException("Failed to open {}".format(serviceName))
 
     return session.getService(serviceName)
 
