@@ -194,7 +194,7 @@ def requestHistorical(session, securities, fields, startDate, endDate):
         raise
 
 def allowCORS(host):
-    HOSTS = ["http://pricingmonkey.com", "http://localhost:8080"]
+    HOSTS = ["http://staging.pricingmonkey.com", "http://pricingmonkey.com", "http://localhost:8080"]
     if host in HOSTS:
         return host
     else:
