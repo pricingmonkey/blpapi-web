@@ -330,7 +330,10 @@ def main():
     app.session = None
     server = None
     try:
-        PORT_NUMBER = 6659
+        if len(sys.argv) >= 3 and sys.argv[2].isdigit():
+            PORT_NUMBER = sys.argv[2]
+        else:
+            PORT_NUMBER = 6659
         try:
             app.session = openBloombergSession()
         except:
