@@ -24,13 +24,75 @@ def get_main_dir():
 BLOOMBERG_HOST = "localhost"
 BLOOMBERG_PORT = 8194
 
+class SubscriptionEventHandler(object):
+    def getTimeStamp(self):
+        return time.strftime("%Y/%m/%d %X")
+
+    def processSubscriptionStatus(self, event):
+        timeStamp = self.getTimeStamp()
+        print("Processing SUBSCRIPTION_STATUS: %s" % event)
+        for msg in event:
+            topic = msg.correlationIds()[0].value()
+            print("%s: %s - %s" % (timeStamp, topic, msg.messageType()))
+
+            if msg.hasElement(REASON):
+                # This can occur on SubscriptionFailure.
+                reason = msg.getElement(REASON)
+                print("        %s: %s" % (
+                    reason.getElement(CATEGORY).getValueAsString(),
+                    reason.getElement(DESCRIPTION).getValueAsString()))
+
+            if msg.hasElement(EXCEPTIONS):
+                # This can occur on SubscriptionStarted if at least
+                # one field is good while the rest are bad.
+                exceptions = msg.getElement(EXCEPTIONS)
+                for exInfo in list(exceptions.values()):
+                    fieldId = exInfo.getElement(FIELD_ID)
+                    reason = exInfo.getElement(REASON)
+                    print("        %s: %s" % (
+                        fieldId.getValueAsString(),
+                        reason.getElement(CATEGORY).getValueAsString()))
+
+    def processSubscriptionDataEvent(self, event):
+        timeStamp = self.getTimeStamp()
+        print("Processing SUBSCRIPTION_DATA: %s" % event)
+        for msg in event:
+            topic = msg.correlationIds()[0].value()
+            print("%s: %s - %s" % (timeStamp, topic, msg.messageType()))
+            for field in msg.asElement().elements():
+                if field.numValues() < 1:
+                    print("        %s is NULL" % field.name())
+                    continue
+
+                # Assume all values are scalar.
+                print("        %s = %s" % (field.name(),
+                                           field.getValueAsString()))
+
+    def processMiscEvents(self, event):
+        timeStamp = self.getTimeStamp()
+        print("Processing MISC EVENT: %s" % event)
+        for msg in event:
+            print("%s: %s" % (timeStamp, msg.messageType()))
+
+    def processEvent(self, event, session):
+        try:
+            if event.eventType() == blpapi.Event.SUBSCRIPTION_DATA:
+                return self.processSubscriptionDataEvent(event)
+            elif event.eventType() == blpapi.Event.SUBSCRIPTION_STATUS:
+                return self.processSubscriptionStatus(event)
+            else:
+                return self.processMiscEvents(event)
+        except blpapi.Exception as e:
+            print("Library Exception !!! %s" % e.description())
+        return False
+
 def openBloombergSession():
     sessionOptions = blpapi.SessionOptions()
     sessionOptions.setServerHost(BLOOMBERG_HOST)
     sessionOptions.setServerPort(BLOOMBERG_PORT)
     sessionOptions.setAutoRestartOnDisconnection(True)
 
-    session = blpapi.Session(sessionOptions)
+    session = blpapi.Session(sessionOptions, SubscriptionEventHandler().processEvent)
 
     if not session.start():
         raise Exception("Failed to start session on {}:{}".format(BLOOMBERG_HOST, BLOOMBERG_PORT))
@@ -207,6 +269,7 @@ def generateEtag(obj):
 
 @app.route('/latest', methods = ['OPTIONS'])
 @app.route('/historical', methods = ['OPTIONS'])
+@app.route('/subscribe', methods = ['OPTIONS'])
 def tellThemWhenCORSIsAllowed():
     response = Response("")
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
@@ -229,6 +292,49 @@ def handleBrokenSession(e):
         if not app.session is None:
             app.session.stop()
             app.session = None
+
+@app.route('/subscribe', methods = ['GET'])
+def subscribe():
+    if app.session is None:
+        try:
+            app.session = openBloombergSession()
+        except Exception as e:
+            handleBrokenSession(e)
+            if client is not None:
+                client.captureException()
+            return respond500(e)
+    try:
+        securities = request.args.getlist('security') or []
+        fields = request.args.getlist('field') or []
+    except Exception as e:
+        if client is not None:
+            client.captureException()
+        return respond400(e)
+
+    try:
+        service = openBloombergService(session, "//blp/mktdata")
+        subscriptions = blpapi.SubscriptionList()
+        for security in securities:
+            topic = service
+            if not security.startswith("/"):
+                topic += "/"
+            topic += security
+            subscriptions.add(topic, fields, [],
+                              blpapi.CorrelationId(security))
+
+        session.subscribe(subscriptions)
+    except Exception as e:
+        handleBrokenSession(e)
+        if client is not None:
+            client.captureException()
+        return respond500(e)
+
+    response = Response(
+        payload,
+        status=200,
+        mimetype='application/json')
+    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    return response
 
 # /latest?field=...&field=...&security=...&security=...
 @app.route('/latest', methods = ['GET'])
@@ -258,7 +364,7 @@ def latest():
         return respond500(e)
 
     response = Response(
-        payload,    
+        payload,
         status=200,
         mimetype='application/json')
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))

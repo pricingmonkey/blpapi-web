@@ -195,7 +195,7 @@ class Message(Map):
         return self.__str__()
 
 class Session:
-    def __init__(self, sessionOptions):
+    def __init__(self, sessionOptions, processEvent):
         self.responses = []
         self.index = 0
 
