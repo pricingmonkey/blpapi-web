@@ -7,7 +7,10 @@ import json
 import traceback
 
 from flask import Flask, Response, request
+import flask_socketio as socketio
+
 app = Flask(__name__)
+socketio = socketio.SocketIO(app)
 
 class BrokenSessionException(Exception):
     pass
@@ -34,13 +37,17 @@ class SubscriptionEventHandler(object):
         print("Processing SUBSCRIPTION_STATUS: {}".format(event))
         for msg in event:
             topic = msg.correlationIds()[0].value()
-            print("%s: %s - %s: %s" % (timeStamp, topic, msg.messageType(), msg))
+            print("%s: %s - %s" % (timeStamp, topic, msg.messageType()))
 
     def processSubscriptionDataEvent(self, event):
         timeStamp = self.getTimeStamp()
         print("Processing SUBSCRIPTION_DATA: {}".format(event))
         for msg in event:
             topic = msg.correlationIds()[0].value()
+            socketio.emit("data", {
+                "security": None,
+                "values": msg.asElement().elements()
+            })
             print("%s: %s - %s: %s" % (timeStamp, topic, msg.messageType(), msg))
 
     def processMiscEvents(self, event):
@@ -287,7 +294,7 @@ def subscribe():
         return respond400(e)
 
     try:
-        service = "//blp/mktdata"
+        service = '//blp/mktdata'
         openBloombergService(app.session, service)
         subscriptions = blpapi.SubscriptionList()
         for security in securities:
@@ -422,7 +429,9 @@ def main():
             if client is not None:
                 client.captureException()
             pass
-        app.run(port = PORT_NUMBER)
+        socketio.run(app, port = PORT_NUMBER)
+    except KeyboardInterrupt:
+        print("Ctrl+C received, exiting...")
     finally:
         if app.session is not None:
             app.session.stop()
@@ -440,5 +449,4 @@ if __name__ == "__main__":
     else:
         wireUpProductionDependencies()
     main()
-
 
