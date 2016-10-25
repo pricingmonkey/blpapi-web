@@ -1,3 +1,4 @@
+import time
 import imp, os, sys
 import threading
 import hashlib
@@ -30,49 +31,23 @@ class SubscriptionEventHandler(object):
 
     def processSubscriptionStatus(self, event):
         timeStamp = self.getTimeStamp()
-        print("Processing SUBSCRIPTION_STATUS: %s" % event)
+        print("Processing SUBSCRIPTION_STATUS: {}".format(event))
         for msg in event:
             topic = msg.correlationIds()[0].value()
-            print("%s: %s - %s" % (timeStamp, topic, msg.messageType()))
-
-            if msg.hasElement(REASON):
-                # This can occur on SubscriptionFailure.
-                reason = msg.getElement(REASON)
-                print("        %s: %s" % (
-                    reason.getElement(CATEGORY).getValueAsString(),
-                    reason.getElement(DESCRIPTION).getValueAsString()))
-
-            if msg.hasElement(EXCEPTIONS):
-                # This can occur on SubscriptionStarted if at least
-                # one field is good while the rest are bad.
-                exceptions = msg.getElement(EXCEPTIONS)
-                for exInfo in list(exceptions.values()):
-                    fieldId = exInfo.getElement(FIELD_ID)
-                    reason = exInfo.getElement(REASON)
-                    print("        %s: %s" % (
-                        fieldId.getValueAsString(),
-                        reason.getElement(CATEGORY).getValueAsString()))
+            print("%s: %s - %s: %s" % (timeStamp, topic, msg.messageType(), msg))
 
     def processSubscriptionDataEvent(self, event):
         timeStamp = self.getTimeStamp()
-        print("Processing SUBSCRIPTION_DATA: %s" % event)
+        print("Processing SUBSCRIPTION_DATA: {}".format(event))
         for msg in event:
             topic = msg.correlationIds()[0].value()
-            print("%s: %s - %s" % (timeStamp, topic, msg.messageType()))
-            for field in msg.asElement().elements():
-                if field.numValues() < 1:
-                    print("        %s is NULL" % field.name())
-                    continue
-
-                # Assume all values are scalar.
-                print("        %s = %s" % (field.name(),
-                                           field.getValueAsString()))
+            print("%s: %s - %s: %s" % (timeStamp, topic, msg.messageType(), msg))
 
     def processMiscEvents(self, event):
         timeStamp = self.getTimeStamp()
-        print("Processing MISC EVENT: %s" % event)
+        print("Processing MISC EVENT: {}".format(event))
         for msg in event:
-            print("%s: %s" % (timeStamp, msg.messageType()))
+            print("%s: %s: %s" % (timeStamp, msg.messageType(), msg))
 
     def processEvent(self, event, session):
         try:
@@ -312,7 +287,8 @@ def subscribe():
         return respond400(e)
 
     try:
-        service = openBloombergService(session, "//blp/mktdata")
+        service = "//blp/mktdata"
+        openBloombergService(app.session, service)
         subscriptions = blpapi.SubscriptionList()
         for security in securities:
             topic = service
@@ -322,7 +298,7 @@ def subscribe():
             subscriptions.add(topic, fields, [],
                               blpapi.CorrelationId(security))
 
-        session.subscribe(subscriptions)
+        app.session.subscribe(subscriptions)
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:
