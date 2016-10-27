@@ -1,5 +1,5 @@
 from server import extractReferenceSecurityPricing, extractErrors
-from blpapi_mock import *
+from blpapi_simulator import *
 
 def test_simple():
     message = Message({

@@ -1,5 +1,5 @@
 from server import extractHistoricalSecurityPricing, extractErrors
-from blpapi_mock import *
+from blpapi_simulator import *
 import pytest
 import datetime
 

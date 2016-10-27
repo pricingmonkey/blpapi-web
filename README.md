@@ -44,7 +44,7 @@ Run:
 
 ## Server in terminal mode
 
-    python .\server.py mock
+    python .\server.py simulator
 
 ## Windows service in background mode
 

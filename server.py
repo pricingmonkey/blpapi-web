@@ -447,9 +447,9 @@ if main_is_frozen():
     wireUpProductionDependencies()
 
 if __name__ == "__main__":
-    if len(sys.argv) >= 2 and sys.argv[1] == "mock":
-        print("Using blpapi_mock")
-        import blpapi_mock as blpapi
+    if len(sys.argv) >= 2 and sys.argv[1] == "simulator":
+        print("Using blpapi_simulator")
+        import blpapi_simulator as blpapi
         client = None
     else:
         wireUpProductionDependencies()
