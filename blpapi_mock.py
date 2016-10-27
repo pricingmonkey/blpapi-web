@@ -1,6 +1,7 @@
 import random
 import time
 from datetime import datetime, timedelta
+import threading
 
 def merge_dicts(d1, d2):
     out = d1.copy()
@@ -102,12 +103,16 @@ def Name(name):
 
 class Event:
     RESPONSE = "RESPONSE"
-    def __init__(self, messages):
+    SUBSCRIPTION_DATA = "SUBSCRIPTION_DATA"
+    SUBSCRIPTION_STATUS = "SUBSCRIPTION_STATUS"
+
+    def __init__(self, messages, eventType=RESPONSE):
         self.messages = messages
         self.index = 0
+        self._eventType = eventType
 
     def eventType(self):
-        return Event.RESPONSE
+        return self._eventType
 
     def __iter__(self):
         return self
@@ -182,11 +187,18 @@ class Map:
         return self.__str__()
 
 class Message(Map):
-    def __init__(self, value):
+    def __init__(self, value, correlationId=None):
         self.value = value
+        self._correlationId = correlationId
 
     def messageType(self):
         return Name("ReferenceDataResponse")
+
+    def correlationIds(self):
+        return [self._correlationId]
+
+    def asElement(self):
+        return Map(self.value)
 
     def __str__(self):
         return "Message({})".format(str(self.value))
@@ -198,6 +210,7 @@ class Session:
     def __init__(self, sessionOptions, processEvent):
         self.responses = []
         self.index = 0
+        self.processEvent = processEvent
 
     def start(self):
         return True
@@ -214,6 +227,13 @@ class Session:
     def sendRequest(self, request):
         self.responses = [Event(request.messages())]
 
+    def subscribe(self, subscriptionList):
+        def tick():
+           while True:
+              time.sleep(0.3 + 0.5 * random.random())
+              self.processEvent(Event([subscriptionList.messages()], Event.SUBSCRIPTION_DATA), self)
+        threading.Thread(target=tick).start()
+
     def nextEvent(self, timeout):
         try:
             return self.responses[self.index]
@@ -221,3 +241,22 @@ class Session:
             return None
         self.index += 1
 
+class SubscriptionList:
+    def add(self, topic, fields, extra, correlationId):
+        self._messages = Message({}, correlationId)
+
+    def messages(self):
+        return self._messages
+
+class CorrelationId():
+    COUNTER=0
+
+    def __init__(self, string):
+        self._value = CorrelationId.COUNTER
+        CorrelationId.COUNTER += 1
+
+    def value(self):
+        return self._value
+
+class Exception(BaseException):
+    pass

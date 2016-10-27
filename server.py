@@ -28,6 +28,8 @@ def get_main_dir():
 BLOOMBERG_HOST = "localhost"
 BLOOMBERG_PORT = 8194
 
+subscriptions = {}
+
 class SubscriptionEventHandler(object):
     def getTimeStamp(self):
         return time.strftime("%Y/%m/%d %X")
@@ -43,12 +45,14 @@ class SubscriptionEventHandler(object):
         timeStamp = self.getTimeStamp()
         print("Processing SUBSCRIPTION_DATA: {}".format(event))
         for msg in event:
-            topic = msg.correlationIds()[0].value()
-            socketio.emit("data", {
-                "security": None,
+            correlationId = msg.correlationIds()[0].value()
+            pushMessage = {
+                "security": subscriptions[correlationId]["security"],
                 "values": msg.asElement().elements()
-            })
-            print("%s: %s - %s: %s" % (timeStamp, topic, msg.messageType(), msg))
+            } 
+            socketio.emit("data", pushMessage)
+            print("Message: %s" % pushMessage)
+            print("%s: %s - %s: %s" % (timeStamp, correlationId, msg.messageType(), msg))
 
     def processMiscEvents(self, event):
         timeStamp = self.getTimeStamp()
@@ -296,16 +300,17 @@ def subscribe():
     try:
         service = '//blp/mktdata'
         openBloombergService(app.session, service)
-        subscriptions = blpapi.SubscriptionList()
+        subscriptionList = blpapi.SubscriptionList()
         for security in securities:
             topic = service
             if not security.startswith("/"):
                 topic += "/"
             topic += security
-            subscriptions.add(topic, fields, [],
-                              blpapi.CorrelationId(security))
+            correlationId = blpapi.CorrelationId(security)
+            subscriptions[correlationId.value()] = { "security": security, "fields": fields }
+            subscriptionList.add(topic, fields, [], correlationId)
 
-        app.session.subscribe(subscriptions)
+        app.session.subscribe(subscriptionList)
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:
@@ -313,7 +318,7 @@ def subscribe():
         return respond500(e)
 
     response = Response(
-        payload,
+        json.dumps({ "message": "OK"}).encode(),
         status=200,
         mimetype='application/json')
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
