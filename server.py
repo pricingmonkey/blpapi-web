@@ -47,10 +47,11 @@ class SubscriptionEventHandler(object):
         for msg in event:
             correlationId = msg.correlationIds()[0].value()
             pushMessage = {
+                "type": "SUBSCRIPTION_DATA",
                 "security": subscriptions[correlationId]["security"],
-                "values": msg.asElement().elements()
-            } 
-            socketio.emit("data", pushMessage)
+                "values": {each.name(): each.getValue() for each in msg.asElement().elements()}
+            }
+            socketio.emit("action", pushMessage)
             print("Message: %s" % pushMessage)
             print("%s: %s - %s: %s" % (timeStamp, correlationId, msg.messageType(), msg))
 
@@ -110,7 +111,7 @@ def sendAndWait(session, request):
 
 def extractReferenceSecurityPricing(message):
     result = []
-    if message.hasElement("securityData"): 
+    if message.hasElement("securityData"):
         for securityInformation in list(message.getElement("securityData").values()):
             fields = []
             for field in securityInformation.getElement("fieldData").elements():
@@ -126,7 +127,7 @@ def extractReferenceSecurityPricing(message):
 
 def extractHistoricalSecurityPricing(message):
     resultsForDate = {}
-    if message.hasElement("securityData"): 
+    if message.hasElement("securityData"):
         securityInformation = message.getElement("securityData")
         security = securityInformation.getElementValue("security")
         for fieldsOnDate in list(securityInformation.getElement("fieldData").values()):
@@ -170,13 +171,13 @@ def extractError(errorElement):
 
 def extractErrors(message):
     result = []
-    if message.hasElement("responseError"): 
+    if message.hasElement("responseError"):
         result.append(extractError(message.getElement("responseError")))
-    if message.hasElement("securityData"): 
+    if message.hasElement("securityData"):
         if message.getElement("securityData").isArray():
-           securityData = list(message.getElement("securityData").values()) 
+           securityData = list(message.getElement("securityData").values())
         else:
-           securityData = list([message.getElement("securityData")]) 
+           securityData = list([message.getElement("securityData")])
         for securityInformation in securityData:
             if securityInformation.hasElement("fieldExceptions"):
                 for fieldException in list(securityInformation.getElement("fieldExceptions").values()):
@@ -311,6 +312,7 @@ def subscribe():
             subscriptionList.add(topic, fields, [], correlationId)
 
         app.session.subscribe(subscriptionList)
+        payload = json.dumps(requestLatest(app.session, securities, fields)).encode()
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:
@@ -318,7 +320,7 @@ def subscribe():
         return respond500(e)
 
     response = Response(
-        json.dumps({ "message": "OK"}).encode(),
+        payload,
         status=200,
         mimetype='application/json')
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))

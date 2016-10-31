@@ -8,6 +8,20 @@ def merge_dicts(d1, d2):
     out.update(d2)
     return out
 
+def randomFieldValue(field):
+    if field == "FUT_CTD_CPN":
+        return "1.000"
+    elif field == "FUT_CTD_MTY":
+        return "08/15/2025"
+    elif field == "FUT_CTD_FREQ":
+        return "A"
+    elif field == "FUT_DLV_DT_LAST":
+        return "12/12/2016"
+    elif field == "FUT_CNVS_FACTOR":
+        return ".669312"
+    else:
+        return str(99 + (0.05 * random.random()))
+
 class SessionOptions:
     def setServerHost(self, host):
         pass
@@ -31,20 +45,6 @@ class Request:
             self.params[name] = []
         self.params[name].append(value)
 
-    def __randomFieldValue(self, field):
-        if field == "FUT_CTD_CPN":
-            return "1.000"
-        elif field == "FUT_CTD_MTY":
-            return "08/15/2025"
-        elif field == "FUT_CTD_FREQ":
-            return "A"
-        elif field == "FUT_DLV_DT_LAST":
-            return "12/12/2016"
-        elif field == "FUT_CNVS_FACTOR":
-            return ".669312"
-        else:
-            return str(99 + (0.05 * random.random()))
-
     def __isWeekday(self, date):
         return date.isoweekday() <= 5
 
@@ -62,7 +62,7 @@ class Request:
                 "securityData": List([Map({
                     "security": security,
                     "fieldData": Map({
-                        field: self.__randomFieldValue(field) 
+                        field: randomFieldValue(field)
                     for field in self.params["fields"]})
                 }) for security in correctSecurities] + [
                     Map({
@@ -89,7 +89,7 @@ class Request:
                     "fieldData": List([
                         Map(merge_dicts(
                             { "date": date},
-                            { field: self.__randomFieldValue(field) for field in self.params["fields"] }
+                            { field: randomFieldValue(field) for field in self.params["fields"] }
                         )) for date in [startDate + timedelta(days=i) for i in range((endDate - startDate).days + 1)] if self.__isWeekday(date)])
                     })
                 }) for security in self.params["securities"]]
@@ -243,10 +243,13 @@ class Session:
 
 class SubscriptionList:
     def add(self, topic, fields, extra, correlationId):
-        self._messages = Message({}, correlationId)
+        self.fields = fields
+        self.correlationId = correlationId
 
     def messages(self):
-        return self._messages
+        return Message(
+            {field: randomFieldValue(field) for field in self.fields},
+            self.correlationId)
 
 class CorrelationId():
     COUNTER=0
