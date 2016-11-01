@@ -8,7 +8,7 @@ def merge_dicts(d1, d2):
     out.update(d2)
     return out
 
-def randomFieldValue(field):
+def randomFieldValue(field, security = "RXH7 COMDTY"):
     if field == "FUT_CTD_CPN":
         return "1.000"
     elif field == "FUT_CTD_MTY":
@@ -19,8 +19,10 @@ def randomFieldValue(field):
         return "12/12/2016"
     elif field == "FUT_CNVS_FACTOR":
         return ".669312"
-    else:
+    elif len(security) < 12:
         return str(99 + (0.05 * random.random()))
+    else:
+        return str(0.14 + (0.05 * random.random()))
 
 class SessionOptions:
     def setServerHost(self, host):
@@ -62,7 +64,7 @@ class Request:
                 "securityData": List([Map({
                     "security": security,
                     "fieldData": Map({
-                        field: randomFieldValue(field)
+                        field: randomFieldValue(field, security)
                     for field in self.params["fields"]})
                 }) for security in correctSecurities] + [
                     Map({
@@ -89,7 +91,7 @@ class Request:
                     "fieldData": List([
                         Map(merge_dicts(
                             { "date": date},
-                            { field: randomFieldValue(field) for field in self.params["fields"] }
+                            { field: randomFieldValue(field, security) for field in self.params["fields"] }
                         )) for date in [startDate + timedelta(days=i) for i in range((endDate - startDate).days + 1)] if self.__isWeekday(date)])
                     })
                 }) for security in self.params["securities"]]
