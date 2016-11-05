@@ -28,8 +28,8 @@ setup(
             "dist_dir": "./build",
             "compressed": True, 
             "bundle_files": 3, 
-            "includes": ["_internals"],
-            "packages": ["blpapi", "encodings", "raven"]
+            "includes": ["_internals", "urllib", "engineio.async_eventlet"],
+            "packages": ["blpapi", "encodings", "raven", "eventlet"]
         }},
         console=[standalone_server],
     service=[service]

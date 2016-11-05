@@ -54,6 +54,28 @@ Run:
 
 ## Build into Windows executable
 
+Before proceeding you will need to apply a patch presented below to
+your py2exe module (you should find it in %PYTHON_HOME%/Lib/site-packages/py2exe):
+
+    diff --git a/hooks.py b/hooks-patched.py
+    --- a/hooks.py
+    +++ b/hooks-patched.py
+    @@ -291,14 +291,14 @@ def hook_six(finder, module):
+                     self.__finder.safe_import_hook(renamed, caller=self)
+                     mod = self.__finder.modules[renamed]
+                     # add the module again with the renamed name:
+    -                self.__finder._add_module("six.moves." + name, mod)
+    +                self.__finder._add_module("six.moves.py2exe." + name, mod)
+                     return mod
+                 else:
+                     raise AttributeError(name)
+     
+         m = SixImporter(finder,
+    -                    None, "six.moves", finder._optimize)
+    -    finder._add_module("six.moves", m)
+    +                    None, "six.moves.py2exe", finder._optimize)
+    +    finder._add_module("six.moves.py2exe", m)
+
 Make sure you have Inno Setup installed, and the path to Inno Setup
 in the script below is correct.
 
