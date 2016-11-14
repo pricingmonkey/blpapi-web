@@ -36,30 +36,25 @@ class SubscriptionEventHandler(object):
 
     def processSubscriptionStatus(self, event):
         timeStamp = self.getTimeStamp()
-        print("Processing SUBSCRIPTION_STATUS: {}".format(event))
         for msg in event:
             topic = msg.correlationIds()[0].value()
-            print("%s: %s - %s" % (timeStamp, topic, msg.messageType()))
+            print("(SUBSCRIPTION_STATUS) %s: %s - %s" % (timeStamp, topic, msg.messageType()))
 
     def processSubscriptionDataEvent(self, event):
         timeStamp = self.getTimeStamp()
-        print("Processing SUBSCRIPTION_DATA: {}".format(event))
         for msg in event:
             correlationId = msg.correlationIds()[0].value()
-            print("%s: %s - %s: %s" % (timeStamp, correlationId, msg.messageType(), msg))
             pushMessage = {
                 "type": "SUBSCRIPTION_DATA",
                 "security": subscriptions[correlationId]["security"],
                 "values": {str(each.name()): str(each.getValue()) for each in msg.asElement().elements() if each.numValues() > 0}
             }
             socketio.emit("action", pushMessage)
-            print("Message: %s" % pushMessage)
 
     def processMiscEvents(self, event):
         timeStamp = self.getTimeStamp()
-        print("Processing MISC EVENT: {}".format(event))
         for msg in event:
-            print("%s: %s: %s" % (timeStamp, msg.messageType(), msg))
+            print("(MISC_EVENT) %s: %s" % (timeStamp, msg.messageType()))
 
     def processEvent(self, event, session):
         try:
@@ -401,7 +396,6 @@ def historical():
         "startDate": startDate,
         "endDate": endDate
     })
-    print(request.headers.get('If-None-Match'))
     if request.headers.get('If-None-Match') == etag:
         response = Response(
             "",
