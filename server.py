@@ -70,7 +70,9 @@ class SubscriptionEventHandler(object):
             else:
                 return self.processMiscEvents(event)
         except blpapi.Exception as e:
-            print("Library Exception !!! %s" % e.description())
+            traceback.print_exc()
+            if client is not None:
+                client.captureException()
         return False
 
 def openBloombergSession(isAsync = False):
