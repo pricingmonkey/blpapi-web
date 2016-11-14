@@ -158,6 +158,11 @@ class Map:
         def name(self):
             return self.key
 
+        def numValues(self):
+            if self.value is None:
+                return 0
+            return 1
+
         def getValue(self):
             return self.value
 

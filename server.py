@@ -46,14 +46,14 @@ class SubscriptionEventHandler(object):
         print("Processing SUBSCRIPTION_DATA: {}".format(event))
         for msg in event:
             correlationId = msg.correlationIds()[0].value()
+            print("%s: %s - %s: %s" % (timeStamp, correlationId, msg.messageType(), msg))
             pushMessage = {
                 "type": "SUBSCRIPTION_DATA",
                 "security": subscriptions[correlationId]["security"],
-                "values": {each.name(): each.getValue() for each in msg.asElement().elements()}
+                "values": {str(each.name()): str(each.getValue()) for each in msg.asElement().elements() if each.numValues() > 0}
             }
             socketio.emit("action", pushMessage)
             print("Message: %s" % pushMessage)
-            print("%s: %s - %s: %s" % (timeStamp, correlationId, msg.messageType(), msg))
 
     def processMiscEvents(self, event):
         timeStamp = self.getTimeStamp()
