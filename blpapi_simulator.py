@@ -209,7 +209,7 @@ class Message(Map):
         return self.__str__()
 
 class Session:
-    def __init__(self, sessionOptions, processEvent):
+    def __init__(self, sessionOptions, processEvent=None):
         self.responses = []
         self.index = 0
         self.processEvent = processEvent
@@ -254,11 +254,8 @@ class SubscriptionList:
             self.correlationId)
 
 class CorrelationId():
-    COUNTER=0
-
     def __init__(self, string):
-        self._value = CorrelationId.COUNTER
-        CorrelationId.COUNTER += 1
+        self._value = hash(string)
 
     def value(self):
         return self._value
