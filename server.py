@@ -1,16 +1,19 @@
+import eventlet
+eventlet.monkey_patch()
+
 import time
 import imp, os, sys
 import threading
 import hashlib
-from urllib.parse import parse_qs,urlparse
+from urllib.parse import parse_qs, urlparse
 import json
 import traceback
 
 from flask import Flask, Response, request
-import flask_socketio as socketio
+from flask_socketio import emit, SocketIO
 
 app = Flask(__name__)
-socketio = socketio.SocketIO(app)
+socketio = SocketIO(app, async_mode="eventlet")
 
 class BrokenSessionException(Exception):
     pass
@@ -49,7 +52,8 @@ class SubscriptionEventHandler(object):
                 "security": subscriptions[correlationId]["security"],
                 "values": {str(each.name()): str(each.getValue()) for each in msg.asElement().elements() if each.numValues() > 0}
             }
-            socketio.emit("action", pushMessage)
+            socketio.emit("action", pushMessage, namespace="/")
+            socketio.sleep(0)
 
     def processMiscEvents(self, event):
         timeStamp = self.getTimeStamp()
@@ -298,6 +302,7 @@ def subscribe():
     try:
         securities = request.args.getlist('security') or []
         fields = request.args.getlist('field') or []
+        interval = request.args.get('interval') or "2.0"
     except Exception as e:
         if client is not None:
             client.captureException()
@@ -314,7 +319,7 @@ def subscribe():
             topic += security
             correlationId = blpapi.CorrelationId(security)
             subscriptions[correlationId.value()] = { "security": security, "fields": fields }
-            subscriptionList.add(topic, fields, [], correlationId)
+            subscriptionList.add(topic, fields, "interval=" + interval, correlationId)
 
         app.sessionAsync.subscribe(subscriptionList)
         payload = json.dumps(requestLatest(app.sessionSync, securities, fields)).encode()

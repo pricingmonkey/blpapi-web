@@ -249,7 +249,7 @@ class Session:
         self.index += 1
 
 class SubscriptionList:
-    def add(self, topic, fields, extra, correlationId):
+    def add(self, topic, fields, options, correlationId):
         self.fields = fields
         self.correlationId = correlationId
 
