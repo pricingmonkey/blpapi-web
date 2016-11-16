@@ -261,6 +261,7 @@ def generateEtag(obj):
     sha1.update("{}".format(obj).encode())
     return '"{}"'.format(sha1.hexdigest())
 
+@app.route('/status', methods = ['OPTIONS'])
 @app.route('/latest', methods = ['OPTIONS'])
 @app.route('/historical', methods = ['OPTIONS'])
 @app.route('/subscribe', methods = ['OPTIONS'])
@@ -289,6 +290,15 @@ def handleBrokenSession(e):
         if not app.sessionAsync is None:
             app.sessionAsync.stop()
             app.sessionAsync = None
+
+@app.route('/status', methods = ['GET'])
+def status():
+    response = Response(
+        json.dumps({ "status": "UP"}).encode(),
+        status=200,
+        mimetype='application/json')
+    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    return response
 
 @app.route('/subscribe', methods = ['GET'])
 def subscribe():
