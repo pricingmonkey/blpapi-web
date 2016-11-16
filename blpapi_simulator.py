@@ -249,13 +249,14 @@ class Session:
         self.index += 1
 
 class SubscriptionList:
-    def add(self, topic, fields, options, correlationId):
+    def add(self, topicOrSecurity, fields, options, correlationId):
         self.fields = fields
         self.correlationId = correlationId
+        self.topicOrSecurity = topicOrSecurity
 
     def messages(self):
         return Message(
-            {field: randomFieldValue(field) for field in self.fields},
+            {field: randomFieldValue(field, self.topicOrSecurity) for field in self.fields},
             self.correlationId)
 
 class CorrelationId():
