@@ -54,3 +54,16 @@ def test_response_error():
     assert len(response) == 0
     assert len(errors) == 1
     assert errors[0] == "CATEGORY/SUBCATEGORY MESSAGE"
+
+def test_response_error_no_subcategory():
+    message = Message({
+        "responseError": Map({
+            "category": "CATEGORY",
+            "message": "MESSAGE"
+        })
+    })
+    response = extractReferenceSecurityPricing(message)
+    errors = extractErrors(message)
+    assert len(response) == 0
+    assert len(errors) == 1
+    assert errors[0] == "CATEGORY/None MESSAGE"
