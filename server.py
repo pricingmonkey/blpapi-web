@@ -12,6 +12,7 @@ from flask import Flask, Response, request
 from flask_socketio import emit, SocketIO
 
 app = Flask(__name__)
+app.allSubscriptions = []
 socketio = SocketIO(app, async_mode="threading")
 
 class BrokenSessionException(Exception):
@@ -30,7 +31,6 @@ def get_main_dir():
 BLOOMBERG_HOST = "localhost"
 BLOOMBERG_PORT = 8194
 
-subscriptions = {}
 
 class SubscriptionEventHandler(object):
     def getTimeStamp(self):
@@ -39,21 +39,18 @@ class SubscriptionEventHandler(object):
     def processSubscriptionStatus(self, event):
         timeStamp = self.getTimeStamp()
         for msg in event:
+            security = msg.correlationIds()[0].value()
             if msg.messageType() == "SubscriptionFailure":
-                print(str(msg))
-                client.captureMessage(str(msg))
-            topic = msg.correlationIds()[0].value()
-            print("(SUBSCRIPTION_STATUS) %s: %s - %s" % (timeStamp, topic, msg.messageType()))
+                client.captureMessage(str({"security": security, "message": str(msg)}))
         return True
 
     def processSubscriptionDataEvent(self, event):
         timeStamp = self.getTimeStamp()
         for msg in event:
-            correlationId = msg.correlationIds()[0].value()
-            print(str(msg.correlationIds()))
+            security = msg.correlationIds()[0].value()
             pushMessage = {
                 "type": "SUBSCRIPTION_DATA",
-                "security": subscriptions[correlationId]["security"],
+                "security": security,
                 "values": {str(each.name()): str(each.getValue()) for each in msg.asElement().elements() if each.numValues() > 0}
             }
             socketio.emit("action", pushMessage, namespace="/")
@@ -82,6 +79,7 @@ def openBloombergSession(isAsync = False):
 
     if isAsync:
         session = blpapi.Session(sessionOptions, SubscriptionEventHandler().processEvent)
+        app.allSubscriptions = []
     else:
         session = blpapi.Session(sessionOptions)
 
@@ -91,13 +89,15 @@ def openBloombergSession(isAsync = False):
     return session
 
 def openBloombergService(session, serviceName):
+    sessionRestarted = False
     if not session.openService(serviceName):
+        sessionRestarted = True
         session.stop()
         session.start()
         if not session.openService(serviceName):
             raise BrokenSessionException("Failed to open {}".format(serviceName))
 
-    return session.getService(serviceName)
+    return session.getService(serviceName), sessionRestarted
 
 def sendAndWait(session, request):
     session.sendRequest(request)
@@ -197,7 +197,7 @@ def extractErrors(message):
 
 def requestLatest(session, securities, fields):
     try:
-        refDataService = openBloombergService(session, "//blp/refdata")
+        refDataService, _ = openBloombergService(session, "//blp/refdata")
         request = refDataService.createRequest("ReferenceDataRequest")
 
         request.set("returnFormattedValue", True)
@@ -222,7 +222,7 @@ def requestLatest(session, securities, fields):
 
 def requestHistorical(session, securities, fields, startDate, endDate):
     try:
-        refDataService = openBloombergService(session, "//blp/refdata")
+        refDataService, _ = openBloombergService(session, "//blp/refdata")
         request = refDataService.createRequest("HistoricalDataRequest")
 
         request.set("startDate", startDate)
@@ -262,6 +262,7 @@ def generateEtag(obj):
     return '"{}"'.format(sha1.hexdigest())
 
 @app.route('/status', methods = ['OPTIONS'])
+@app.route('/subscriptions', methods = ['OPTIONS'])
 @app.route('/latest', methods = ['OPTIONS'])
 @app.route('/historical', methods = ['OPTIONS'])
 @app.route('/subscribe', methods = ['OPTIONS'])
@@ -300,6 +301,15 @@ def status():
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
     return response
 
+@app.route('/subscriptions', methods = ['GET'])
+def subscriptions():
+    response = Response(
+        json.dumps(app.allSubscriptions).encode(),
+        status=200,
+        mimetype='application/json')
+    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    return response
+
 @app.route('/subscribe', methods = ['GET'])
 def subscribe():
     try:
@@ -320,11 +330,13 @@ def subscribe():
         return respond400(e)
 
     try:
-        openBloombergService(app.sessionAsync, "//blp/mktdata")
+        _, sessionRestarted = openBloombergService(app.sessionAsync, "//blp/mktdata")
+        if sessionRestarted:
+            app.allSubscriptions = []
         subscriptionList = blpapi.SubscriptionList()
         for security in securities:
             correlationId = blpapi.CorrelationId(security)
-            subscriptions[correlationId.value()] = { "security": security, "fields": fields }
+            app.allSubscriptions.append({ "security": security, "fields": fields })
             subscriptionList.add(security, fields, "interval=" + interval, correlationId)
 
         app.sessionAsync.subscribe(subscriptionList)
