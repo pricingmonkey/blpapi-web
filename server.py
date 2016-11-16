@@ -1,3 +1,5 @@
+import logging
+
 import time
 import imp, os, sys
 import threading
@@ -37,16 +39,18 @@ class SubscriptionEventHandler(object):
     def processSubscriptionStatus(self, event):
         timeStamp = self.getTimeStamp()
         for msg in event:
-            if msg.messageType() == "SUBSCRIPTION_FAILURE":
+            if msg.messageType() == "SubscriptionFailure":
                 print(str(msg))
                 client.captureMessage(str(msg))
             topic = msg.correlationIds()[0].value()
             print("(SUBSCRIPTION_STATUS) %s: %s - %s" % (timeStamp, topic, msg.messageType()))
+        return True
 
     def processSubscriptionDataEvent(self, event):
         timeStamp = self.getTimeStamp()
         for msg in event:
             correlationId = msg.correlationIds()[0].value()
+            print(str(msg.correlationIds()))
             pushMessage = {
                 "type": "SUBSCRIPTION_DATA",
                 "security": subscriptions[correlationId]["security"],
@@ -54,11 +58,7 @@ class SubscriptionEventHandler(object):
             }
             socketio.emit("action", pushMessage, namespace="/")
             socketio.sleep(0)
-
-    def processMiscEvents(self, event):
-        timeStamp = self.getTimeStamp()
-        for msg in event:
-            print("(MISC_EVENT) %s: %s" % (timeStamp, msg.messageType()))
+        return True
 
     def processEvent(self, event, session):
         try:
@@ -67,7 +67,7 @@ class SubscriptionEventHandler(object):
             elif event.eventType() == blpapi.Event.SUBSCRIPTION_STATUS:
                 return self.processSubscriptionStatus(event)
             else:
-                return self.processMiscEvents(event)
+                return True
         except blpapi.Exception as e:
             traceback.print_exc()
             if client is not None:
@@ -429,6 +429,9 @@ def wireUpProductionDependencies():
     from raven.transport.threaded_requests import ThreadedRequestsHTTPTransport
     from raven import Client
     client = Client("https://ec16b2b639e642e49c59e922d2c7dc9b:2dd38313e1d44fd2bc2adb5a510639fc@sentry.io/100358?ca_certs={}/certifi/cacert.pem".format(get_main_dir()))
+
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.WARNING)
 
 def main():
     app.sessionSync = None
