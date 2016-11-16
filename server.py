@@ -172,7 +172,10 @@ def extractHistoricalSecurityPricing(message):
 
 def extractError(errorElement):
     category = errorElement.getElementValue("category")
-    subcategory = errorElement.getElementValue("subcategory")
+    if errorElement.hasElement("subcategory"):
+        subcategory = errorElement.getElementValue("subcategory")
+    else:
+        subcategory = None
     message = errorElement.getElementValue("message")
     return "{}/{} {}".format(category, subcategory, message)
 
