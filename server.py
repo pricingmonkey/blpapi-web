@@ -296,8 +296,6 @@ def handleBrokenSession(e):
 @app.route('/subscribe', methods = ['GET'])
 def subscribe():
     try:
-        if app.sessionSync is None:
-            app.sessionSync = openBloombergSession()
         if app.sessionAsync is None:
             app.sessionAsync = openBloombergSession(isAsync=True)
     except Exception as e:
@@ -323,7 +321,6 @@ def subscribe():
             subscriptionList.add(security, fields, "interval=" + interval, correlationId)
 
         app.sessionAsync.subscribe(subscriptionList)
-        payload = json.dumps(requestLatest(app.sessionSync, securities, fields)).encode()
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:
@@ -331,8 +328,8 @@ def subscribe():
         return respond500(e)
 
     response = Response(
-        payload,
-        status=200,
+        json.dumps({ "message": "OK"}).encode(),
+        status=202,
         mimetype='application/json')
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
     return response
