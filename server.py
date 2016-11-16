@@ -320,7 +320,7 @@ def subscribe():
         for security in securities:
             correlationId = blpapi.CorrelationId(security)
             subscriptions[correlationId.value()] = { "security": security, "fields": fields }
-            subscriptionList.add(topic, fields, "interval=" + interval, correlationId)
+            subscriptionList.add(security, fields, "interval=" + interval, correlationId)
 
         app.sessionAsync.subscribe(subscriptionList)
         payload = json.dumps(requestLatest(app.sessionSync, securities, fields)).encode()
