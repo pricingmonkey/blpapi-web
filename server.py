@@ -40,6 +40,9 @@ class SubscriptionEventHandler(object):
     def processSubscriptionStatus(self, event):
         timeStamp = self.getTimeStamp()
         for msg in event:
+            if msg.messageType() == "SUBSCRIPTION_FAILURE":
+                print(str(msg))
+                client.captureMessage(str(msg))
             topic = msg.correlationIds()[0].value()
             print("(SUBSCRIPTION_STATUS) %s: %s - %s" % (timeStamp, topic, msg.messageType()))
 
