@@ -1,6 +1,3 @@
-import eventlet
-eventlet.monkey_patch()
-
 import time
 import imp, os, sys
 import threading
@@ -13,7 +10,7 @@ from flask import Flask, Response, request
 from flask_socketio import emit, SocketIO
 
 app = Flask(__name__)
-socketio = SocketIO(app, async_mode="eventlet")
+socketio = SocketIO(app, async_mode="threading")
 
 class BrokenSessionException(Exception):
     pass

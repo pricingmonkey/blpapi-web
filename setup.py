@@ -28,7 +28,7 @@ setup(
             "dist_dir": "./build",
             "compressed": True, 
             "bundle_files": 3, 
-            "includes": ["_internals", "urllib", "engineio.async_eventlet"],
+            "includes": ["_internals", "urllib", "engineio.async_eventlet", "engineio.async_threading"],
             "packages": ["blpapi", "encodings", "raven", "eventlet"]
         }},
         console=[standalone_server],
