@@ -309,14 +309,9 @@ def subscribe():
         return respond400(e)
 
     try:
-        service = '//blp/mktdata'
-        openBloombergService(app.sessionAsync, service)
+        openBloombergService(app.sessionAsync, "//blp/mktdata")
         subscriptionList = blpapi.SubscriptionList()
         for security in securities:
-            topic = service
-            if not security.startswith("/"):
-                topic += "/"
-            topic += security
             correlationId = blpapi.CorrelationId(security)
             subscriptions[correlationId.value()] = { "security": security, "fields": fields }
             subscriptionList.add(topic, fields, "interval=" + interval, correlationId)
