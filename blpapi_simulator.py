@@ -238,7 +238,7 @@ class Session:
         def tick():
            while True:
               time.sleep(0.3 + 0.5 * random.random())
-              self.processEvent(Event([subscriptionList.messages()], Event.SUBSCRIPTION_DATA), self)
+              self.processEvent(Event(subscriptionList.messages(), Event.SUBSCRIPTION_DATA), self)
         threading.Thread(target=tick).start()
 
     def nextEvent(self, timeout):
@@ -249,19 +249,28 @@ class Session:
         self.index += 1
 
 class SubscriptionList:
+    class Subscription:
+        def __init__(self, topicOrSecurity, fields, options, correlationId):
+            self.fields = fields
+            self.correlationId = correlationId
+            self.topicOrSecurity = topicOrSecurity
+
+    def __init__(self):
+        self.all = []
+
     def add(self, topicOrSecurity, fields, options, correlationId):
-        self.fields = fields
-        self.correlationId = correlationId
-        self.topicOrSecurity = topicOrSecurity
+        self.all.append(self.Subscription(topicOrSecurity, fields, options, correlationId));
 
     def messages(self):
-        return Message(
-            {field: randomFieldValue(field, self.topicOrSecurity) for field in self.fields},
-            self.correlationId)
+        return [
+            Message(
+                {field: randomFieldValue(field, subscription.topicOrSecurity) for field in subscription.fields},
+                subscription.correlationId)
+            for subscription in self.all]
 
 class CorrelationId():
     def __init__(self, string):
-        self._value = hash(string)
+        self._value = string
 
     def value(self):
         return self._value
