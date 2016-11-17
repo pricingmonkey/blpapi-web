@@ -21,7 +21,8 @@ Use Windows Power Shell 3 to run any of the following instructions.
 4. Install latest version of Python 3.4 from https://www.python.org/downloads/.
 5. Go to https://sourceforge.net/projects/pywin32/files/pywin32/Build%20220/,
 download pywin for python 3.4 and install it.
-6. Configure PATH to include your main Python 3.4 directory (eg. C:\Python3.4)
+6. Configure PATH to include your main Python 3.4 directory and scripts
+directory (eg. C:\Python3.4 and C:\Python34\Scripts).
 7. Go to https://www.bloomberglabs.com/api/libraries/ and download C/C++ supported
 release.
 8. Go to the downloaded file which is zipped. Extract it directly to C:/
@@ -37,7 +38,7 @@ Run:
 
     pip install virtualenv
     virtualenv venv
-    source venv/bin/activate
+    venv/Scripts/activate
     pip install -r requirements-dev.txt -r requirements.txt -r requirements-deploy.txt
 
 # Run (development instructions)
