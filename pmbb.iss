@@ -1,6 +1,6 @@
 [Setup]
 AppName=Pricing Monkey
-AppVersion=1.0
+AppVersion=2.0
 AppPublisher=Pricing Monkey
 DefaultDirName={pf}\Pricing Monkey
 UninstallDisplayIcon={app}\uninstall.exe

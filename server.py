@@ -296,7 +296,7 @@ def handleBrokenSession(e):
 @app.route('/status', methods = ['GET'])
 def status():
     response = Response(
-        json.dumps({ "status": "UP"}).encode(),
+        json.dumps({ "status": "UP", "version": "2.0"}).encode(),
         status=200,
         mimetype='application/json')
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
