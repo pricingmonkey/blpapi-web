@@ -237,7 +237,7 @@ class Session:
     def subscribe(self, subscriptionList):
         def tick():
            while True:
-              time.sleep(0.3 + 0.5 * random.random())
+              time.sleep(2 + 0.25 * random.random())
               self.processEvent(Event(subscriptionList.messages(), Event.SUBSCRIPTION_DATA), self)
         threading.Thread(target=tick).start()
 

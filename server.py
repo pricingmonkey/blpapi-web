@@ -1,4 +1,5 @@
 import logging
+import argparse
 
 import time
 import imp, os, sys
@@ -486,7 +487,18 @@ if main_is_frozen():
     wireUpProductionDependencies()
 
 if __name__ == "__main__":
-    if len(sys.argv) >= 2 and sys.argv[1] == "simulator":
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('--simulator', action='store_true',
+                        help='simulate Bloomberg API (instead of using real connection)')
+    parser.add_argument('--log', choices=['critical', 'error', 'warn', 'info', 'debug'],
+                        help='log level')
+
+    args = parser.parse_args()
+
+    if args.log is not None:
+        logging.basicConfig(level=getattr(logging, args.log.upper(), None))
+
+    if args.simulator:
         print("Using blpapi_simulator")
         import blpapi_simulator as blpapi
         client = None
