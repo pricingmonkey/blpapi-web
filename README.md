@@ -40,6 +40,9 @@ Run:
     virtualenv venv
     venv/Scripts/activate
     pip install -r requirements-dev.txt -r requirements.txt -r requirements-deploy.txt
+    cp venv\Lib\site-packages\blpapi\_internals.pyd .
+
+If you get an error saying "Error: Microsoft Visual C++ 10.0 is required" please follow instructions from here: http://stackoverflow.com/questions/28251314/error-microsoft-visual-c-10-0-is-required-unable-to-find-vcvarsall-bat
 
 # Run (development instructions)
 
