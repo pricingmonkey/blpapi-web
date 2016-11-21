@@ -13,7 +13,7 @@ from flask import Flask, Response, request
 from flask_socketio import emit, SocketIO
 
 app = Flask(__name__)
-app.allSubscriptions = []
+app.allSubscriptions = {}
 socketio = SocketIO(app, async_mode="threading")
 
 class BrokenSessionException(Exception):
@@ -80,7 +80,7 @@ def openBloombergSession(isAsync = False):
 
     if isAsync:
         session = blpapi.Session(sessionOptions, SubscriptionEventHandler().processEvent)
-        app.allSubscriptions = []
+        app.allSubscriptions = {}
     else:
         session = blpapi.Session(sessionOptions)
 
@@ -333,11 +333,11 @@ def subscribe():
     try:
         _, sessionRestarted = openBloombergService(app.sessionAsync, "//blp/mktdata")
         if sessionRestarted:
-            app.allSubscriptions = []
+            app.allSubscriptions = {}
         subscriptionList = blpapi.SubscriptionList()
         for security in securities:
             correlationId = blpapi.CorrelationId(security)
-            app.allSubscriptions.append({ "security": security, "fields": fields })
+            app.allSubscriptions[security] = fields
             subscriptionList.add(security, fields, "interval=" + interval, correlationId)
 
         app.sessionAsync.subscribe(subscriptionList)
