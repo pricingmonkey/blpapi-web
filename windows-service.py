@@ -8,8 +8,8 @@ from server import main as start_server
 import threading
 
 class BloombergBridgeService(win32serviceutil.ServiceFramework):
-    _svc_name_ = "Pricing Monkey Bloomberg Bridge"
-    _svc_display_name_ = "Pricing Monkey Bloomberg Bridge"
+    _svc_name_ = "BBApi"
+    _svc_display_name_ = "Web API for Bloomberg Market Data"
 
     def __init__(self,args):
         print("init")

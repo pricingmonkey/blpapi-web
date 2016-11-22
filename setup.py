@@ -6,9 +6,9 @@ class Target:
         self.__dict__.update(kw)
 
         self.version = "2.0.0"
-        self.company_name = "Pricing Monkey"
-        self.copyright = "Pricing Monkey"
-        self.name = "Bloomberg Bridge"
+        self.company_name = "Pricing Monkey Ltd."
+        self.copyright = "Pricing Monkey Ltd."
+        self.name = "Web API for Bloomberg Market Data"
 
 standalone_server = Target(
     script = 'server.py',
