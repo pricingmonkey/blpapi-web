@@ -1,13 +1,13 @@
 [Setup]
-AppName=Pricing Monkey
+AppName=Web API for Bloomberg Market Data
 AppVersion=2.0
-AppPublisher=Pricing Monkey
+AppPublisher=Pricing Monkey Ltd.
 DefaultDirName={pf}\Pricing Monkey
 UninstallDisplayIcon={app}\uninstall.exe
 Compression=lzma2
 SolidCompression=yes
 OutputDir=.\dist
-OutputBaseFilename=pricing-monkey-setup
+OutputBaseFilename=bloomberg-web-api-setup
 ; "ArchitecturesAllowed=x64" specifies that Setup cannot run on
 ; anything but x64.
 ArchitecturesAllowed=x64
@@ -28,3 +28,8 @@ Filename: {tmp}\vc_redist.x64.exe; Parameters: "/q /passive /Q:a /c:""msiexec /q
 [Run]
 Filename: "{app}\run-service.exe"; WorkingDir: "{app}"; Parameters: "--startup auto install"; Flags: runhidden
 Filename: "{app}\run-service.exe"; WorkingDir: "{app}"; Parameters: "restart"; Flags: runhidden
+Filename: "sc"; Parameters: "delete ""Pricing Monkey Bloomberg Bridge"""; Flags: shellexec runhidden
+
+
+[UninstallRun]
+Filename: "{app}\run-service.exe"; WorkingDir: "{app}"; Parameters: "stop"; Flags: runhidden

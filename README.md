@@ -52,7 +52,7 @@ Run:
 
 # Deploy
 
-## Build into Windows executable
+## Build Windows installer
 
 Before proceeding you will need to apply a patch presented below to
 your py2exe module (you should find it in %PYTHON_HOME%/Lib/site-packages/py2exe):
@@ -81,7 +81,7 @@ in the script below is correct.
 
     cp $PYTHON_HOME/lib/site-packages/blpapi/_internals.pyd .
     python setup.py py2exe
-    & 'C:\Program Files (x86)\Inno Setup 5\ISCC.exe' .\pmbb.iss
+    & 'C:\Program Files (x86)\Inno Setup 5\ISCC.exe' .\installer.iss
 
 The result is a setup file in "./dist" directory.
 
@@ -98,10 +98,6 @@ The result is a setup file in "./dist" directory.
 service is stopped, otherwise this will not work):
 
     run.exe
-
-# Automatic user installation
-
-TBD (use Inno setup and pmbb.iss file as input)
 
 # Mac
 
