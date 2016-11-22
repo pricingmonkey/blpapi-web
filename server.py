@@ -1,3 +1,7 @@
+# "import encodings.idna" is a fix for "unknown encoding: idna" error
+# which we saw occurring's on a user's computer and crashing the app
+# in result
+import encodings.idna
 import logging
 import argparse
 
