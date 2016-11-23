@@ -460,23 +460,18 @@ def wireUpProductionDependencies():
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.WARNING)
 
-def main():
+def main(port = 6659):
     app.sessionSync = None
     app.sessionAsync = None
     server = None
     try:
-        if len(sys.argv) >= 3 and sys.argv[2].isdigit():
-            PORT_NUMBER = sys.argv[2]
-        else:
-            PORT_NUMBER = 6659
         try:
             app.sessionSync = openBloombergSession()
             app.sessionAsync = openBloombergSession(isAsync=True)
         except:
             if client is not None:
                 client.captureException()
-            pass
-        socketio.run(app, port = PORT_NUMBER)
+        socketio.run(app, port = port)
     except KeyboardInterrupt:
         print("Ctrl+C received, exiting...")
     finally:
@@ -496,6 +491,8 @@ if __name__ == "__main__":
                         help='simulate Bloomberg API (instead of using real connection)')
     parser.add_argument('--log', choices=['critical', 'error', 'warn', 'info', 'debug'],
                         help='log level')
+    parser.add_argument('--port', type=int, default=6659,
+                        help='port number (default: 6659)')
 
     args = parser.parse_args()
 
@@ -508,5 +505,5 @@ if __name__ == "__main__":
         client = None
     else:
         wireUpProductionDependencies()
-    main()
+    main(args.port)
 
