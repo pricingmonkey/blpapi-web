@@ -469,6 +469,7 @@ def main(port = 6659):
             app.sessionSync = openBloombergSession()
             app.sessionAsync = openBloombergSession(isAsync=True)
         except:
+            traceback.print_exc()
             if client is not None:
                 client.captureException()
         socketio.run(app, port = port)
