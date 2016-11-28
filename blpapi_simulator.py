@@ -262,11 +262,19 @@ class SubscriptionList:
         self.all.append(self.Subscription(topicOrSecurity, fields, options, correlationId));
 
     def messages(self):
+        def generateFields(security, fields):
+            contents = {}
+            contents.update({field: randomFieldValue(field, security) for field in fields})
+            contents.update({"EXTRA_FIELD_%d" % (i): randomFieldValue(None, security) for i in range(200)})
+            if random.random() < 0.1:
+                del contents["ASK"]
+                del contents["BID"]
+            return contents
         return [
             Message(
-                {field: randomFieldValue(field, subscription.topicOrSecurity) for field in subscription.fields},
-                subscription.correlationId)
-            for subscription in self.all]
+                generateFields(subscription.topicOrSecurity, subscription.fields),
+                subscription.correlationId) for subscription in self.all
+        ]
 
 class CorrelationId():
     def __init__(self, string):
