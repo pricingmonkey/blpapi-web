@@ -106,11 +106,14 @@ def openBloombergService(session, serviceName):
     return session.getService(serviceName), sessionRestarted
 
 def sendAndWait(session, request):
-    session.sendRequest(request)
+    eventQueue=blpapi.EventQueue()
+    session.sendRequest(request, eventQueue=eventQueue)
     responses = []
     while(True):
-        # timeout to give a chance to Ctrl+C handling:
-        ev = session.nextEvent(100)
+        ev = eventQueue.nextEvent(100)
+        if ev.eventType() == blpapi.Event.TIMEOUT:
+            continue
+
         for msg in ev:
             if msg.messageType() == blpapi.Name("ReferenceDataResponse") or msg.messageType() == blpapi.Name("HistoricalDataResponse"):
                 responses.append(msg)

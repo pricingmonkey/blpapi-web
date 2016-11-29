@@ -104,6 +104,7 @@ def Name(name):
     return name
 
 class Event:
+    TIMEOUT = "TIMEOUT"
     RESPONSE = "RESPONSE"
     SUBSCRIPTION_DATA = "SUBSCRIPTION_DATA"
     SUBSCRIPTION_STATUS = "SUBSCRIPTION_STATUS"
@@ -213,10 +214,23 @@ class Message(Map):
     def __repr__(self):
         return self.__str__()
 
+class EventQueue:
+    def __init__(self):
+        self.index = 0
+
+    def attachRequest(self, request):
+        self.responses = [Event(request.messages())]
+
+    def nextEvent(self, timeout):
+        try:
+            return self.responses[self.index]
+        except IndexError:
+            return None
+        self.index += 1
+
 class Session:
     def __init__(self, sessionOptions, processEvent=None):
         self.responses = []
-        self.index = 0
         self.processEvent = processEvent
 
     def start(self):
@@ -231,8 +245,9 @@ class Session:
     def getService(self, serviceName):
         return Service()
 
-    def sendRequest(self, request):
-        self.responses = [Event(request.messages())]
+    def sendRequest(self, request, eventQueue=EventQueue()):
+        self.eventQueue = eventQueue
+        self.eventQueue.attachRequest(request)
 
     def subscribe(self, subscriptionList):
         def tick():
@@ -248,11 +263,7 @@ class Session:
         pass
 
     def nextEvent(self, timeout):
-        try:
-            return self.responses[self.index]
-        except IndexError:
-            return None
-        self.index += 1
+        self.eventQueue.nextEvent(timeout)
 
 class SubscriptionList:
     class Subscription:
