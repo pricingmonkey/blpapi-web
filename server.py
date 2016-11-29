@@ -46,7 +46,8 @@ class SubscriptionEventHandler(object):
         for msg in event:
             security = msg.correlationIds()[0].value()
             if msg.messageType() == "SubscriptionFailure":
-                client.captureMessage(str({"security": security, "message": str(msg)}))
+                if client is not None:
+                    client.captureMessage(str({"security": security, "message": str(msg)}))
         return True
 
     def processSubscriptionDataEvent(self, event):
@@ -271,6 +272,7 @@ def generateEtag(obj):
 @app.route('/latest', methods = ['OPTIONS'])
 @app.route('/historical', methods = ['OPTIONS'])
 @app.route('/subscribe', methods = ['OPTIONS'])
+@app.route('/unsubscribe', methods = ['OPTIONS'])
 def tellThemWhenCORSIsAllowed():
     response = Response("")
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
@@ -345,6 +347,48 @@ def subscribe():
             subscriptionList.add(security, fields, "interval=" + interval, correlationId)
 
         app.sessionAsync.subscribe(subscriptionList)
+    except Exception as e:
+        handleBrokenSession(e)
+        if client is not None:
+            client.captureException()
+        return respond500(e)
+
+    response = Response(
+        json.dumps({ "message": "OK"}).encode(),
+        status=202,
+        mimetype='application/json')
+    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    return response
+
+@app.route('/unsubscribe', methods = ['GET'])
+def unsubscribe():
+    try:
+        if app.sessionAsync is None:
+            app.sessionAsync = openBloombergSession(isAsync=True)
+    except Exception as e:
+        handleBrokenSession(e)
+        if client is not None:
+            client.captureException()
+        return respond500(e)
+    try:
+        securities = request.args.getlist('security') or []
+    except Exception as e:
+        if client is not None:
+            client.captureException()
+        return respond400(e)
+
+    try:
+        _, sessionRestarted = openBloombergService(app.sessionAsync, "//blp/mktdata")
+        if sessionRestarted:
+            app.allSubscriptions = {}
+        subscriptionList = blpapi.SubscriptionList()
+        for security in securities:
+            correlationId = blpapi.CorrelationId(security)
+            if security in app.allSubscriptions:
+                del app.allSubscriptions[security]
+            subscriptionList.add(security, correlationId=correlationId)
+
+        app.sessionAsync.unsubscribe(subscriptionList)
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:

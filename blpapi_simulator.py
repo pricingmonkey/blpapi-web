@@ -241,6 +241,9 @@ class Session:
               self.processEvent(Event(subscriptionList.messages(), Event.SUBSCRIPTION_DATA), self)
         threading.Thread(target=tick).start()
 
+    def unsubscribe(self, subscriptionList):
+        pass
+
     def nextEvent(self, timeout):
         try:
             return self.responses[self.index]
@@ -258,7 +261,7 @@ class SubscriptionList:
     def __init__(self):
         self.all = []
 
-    def add(self, topicOrSecurity, fields, options, correlationId):
+    def add(self, topicOrSecurity, fields=None, options=None, correlationId=None):
         self.all.append(self.Subscription(topicOrSecurity, fields, options, correlationId));
 
     def messages(self):
