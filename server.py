@@ -346,7 +346,10 @@ def subscribe():
             app.allSubscriptions[security] = fields
             subscriptionList.add(security, fields, "interval=" + interval, correlationId)
 
-        app.sessionAsync.subscribe(subscriptionList)
+        try:
+            app.sessionAsync.subscribe(subscriptionList)
+        except DuplicateCorrelationIdException:
+            app.sessionAsync.resubscribe(subscriptionList)
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:
