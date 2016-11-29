@@ -342,7 +342,7 @@ def subscribe():
             app.allSubscriptions = {}
         subscriptionList = blpapi.SubscriptionList()
         for security in securities:
-            correlationId = blpapi.CorrelationId(intern(security))
+            correlationId = blpapi.CorrelationId(sys.intern(security))
             app.allSubscriptions[security] = fields
             subscriptionList.add(security, fields, "interval=" + interval, correlationId)
 
@@ -383,7 +383,7 @@ def unsubscribe():
             app.allSubscriptions = {}
         subscriptionList = blpapi.SubscriptionList()
         for security in securities:
-            correlationId = blpapi.CorrelationId(intern(security))
+            correlationId = blpapi.CorrelationId(sys.intern(security))
             if security in app.allSubscriptions:
                 del app.allSubscriptions[security]
             subscriptionList.add(security, correlationId=correlationId)
