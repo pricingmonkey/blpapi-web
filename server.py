@@ -341,15 +341,22 @@ def subscribe():
         if sessionRestarted:
             app.allSubscriptions = {}
         subscriptionList = blpapi.SubscriptionList()
+        resubscriptionList = blpapi.SubscriptionList()
         for security in securities:
             correlationId = blpapi.CorrelationId(sys.intern(security))
-            app.allSubscriptions[security] = fields
-            subscriptionList.add(security, fields, "interval=" + interval, correlationId)
+            if not security in app.allSubscriptions:
+                app.allSubscriptions[security] = list(fields)
+                subscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
+            else:
+                app.allSubscriptions[security] += fields
+                app.allSubscriptions[security] = list(set(app.allSubscriptions[security]))
+                resubscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
 
-        try:
+        if subscriptionList.size() != 0:
             app.sessionAsync.subscribe(subscriptionList)
-        except DuplicateCorrelationIdException:
-            app.sessionAsync.resubscribe(subscriptionList)
+
+        if resubscriptionList.size() != 0:
+            app.sessionAsync.resubscribe(resubscriptionList)
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:

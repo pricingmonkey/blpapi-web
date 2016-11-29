@@ -241,6 +241,9 @@ class Session:
               self.processEvent(Event(subscriptionList.messages(), Event.SUBSCRIPTION_DATA), self)
         threading.Thread(target=tick).start()
 
+    def resubscribe(self, subscriptionList):
+        pass
+
     def unsubscribe(self, subscriptionList):
         pass
 
@@ -263,6 +266,9 @@ class SubscriptionList:
 
     def add(self, topicOrSecurity, fields=None, options=None, correlationId=None):
         self.all.append(self.Subscription(topicOrSecurity, fields, options, correlationId));
+
+    def size(self):
+        return len(self.all)
 
     def messages(self):
         def generateFields(security, fields):
