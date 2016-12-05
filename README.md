@@ -3,7 +3,7 @@
 This module pulls price information from external data providers (eg. Bloomberg).
 Runs on Python == 3.4.
 
-# Windows
+# Windows (see the end of doc for mac instructions)
 
 Use Windows Power Shell 3 to run any of the following instructions.
 
@@ -48,7 +48,7 @@ If you get an error saying "Error: Microsoft Visual C++ 10.0 is required" please
 
 ## Server in terminal mode
 
-    python .\server.py simulator
+    python .\server.py --simulator
 
 ## Windows service in background mode
 
@@ -73,7 +73,7 @@ your py2exe module (you should find it in %PYTHON_HOME%/Lib/site-packages/py2exe
                      return mod
                  else:
                      raise AttributeError(name)
-     
+
          m = SixImporter(finder,
     -                    None, "six.moves", finder._optimize)
     -    finder._add_module("six.moves", m)
@@ -113,3 +113,7 @@ Run:
     virtualenv venv
     source venv/bin/activate
     pip install -r requirements-dev.txt -r requirements.txt
+
+## To run Server from terminal
+
+    python server.py --simulator
