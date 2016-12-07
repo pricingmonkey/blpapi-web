@@ -46,6 +46,8 @@ class SubscriptionEventHandler(object):
         for msg in event:
             security = msg.correlationIds()[0].value()
             if msg.messageType() == "SubscriptionFailure":
+                if security in app.allSubscriptions:
+                    del app.allSubscriptions[security]
                 if client is not None:
                     client.captureMessage(str({"security": security, "message": str(msg)}))
         return True
