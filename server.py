@@ -361,7 +361,13 @@ def subscribe():
             app.sessionAsync.subscribe(subscriptionList)
 
         if resubscriptionList.size() != 0:
-            app.sessionAsync.resubscribe(resubscriptionList)
+            try:
+                app.sessionAsync.resubscribe(resubscriptionList)
+            except Exception as e:
+                if client is not None:
+                    client.captureException()
+                app.sessionAsync.unsubscribe(resubscriptionList)
+                app.sessionAsync.subscribe(resubscriptionList)
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:
