@@ -1,3 +1,5 @@
+import eventlet
+
 # "import encodings.idna" is a fix for "unknown encoding: idna" error
 # which we saw occurring's on a user's computer and crashing the app
 # in result
@@ -18,7 +20,7 @@ from flask_socketio import emit, SocketIO
 
 app = Flask(__name__)
 app.allSubscriptions = {}
-socketio = SocketIO(app, async_mode="threading")
+socketio = SocketIO(app, async_mode="eventlet")
 
 class BrokenSessionException(Exception):
     pass
@@ -35,7 +37,6 @@ def get_main_dir():
 
 BLOOMBERG_HOST = "localhost"
 BLOOMBERG_PORT = 8194
-
 
 class SubscriptionEventHandler(object):
     def getTimeStamp(self):
@@ -79,17 +80,13 @@ class SubscriptionEventHandler(object):
                 client.captureException()
         return False
 
-def openBloombergSession(isAsync = False):
+def openBloombergSession():
     sessionOptions = blpapi.SessionOptions()
     sessionOptions.setServerHost(BLOOMBERG_HOST)
     sessionOptions.setServerPort(BLOOMBERG_PORT)
     sessionOptions.setAutoRestartOnDisconnection(True)
 
-    if isAsync:
-        session = blpapi.Session(sessionOptions, SubscriptionEventHandler().processEvent)
-        app.allSubscriptions = {}
-    else:
-        session = blpapi.Session(sessionOptions)
+    session = blpapi.Session(sessionOptions)
 
     if not session.start():
         raise Exception("Failed to start session on {}:{}".format(BLOOMBERG_HOST, BLOOMBERG_PORT))
@@ -297,12 +294,12 @@ def respond500(e):
 
 def handleBrokenSession(e):
     if isinstance(e, BrokenSessionException):
-        if not app.sessionSync is None:
-            app.sessionSync.stop()
-            app.sessionSync = None
-        if not app.sessionAsync is None:
-            app.sessionAsync.stop()
-            app.sessionAsync = None
+        if not app.sessionForRequests is None:
+            app.sessionForRequests.stop()
+            app.sessionForRequests = None
+        if not app.sessionForSubscriptions is None:
+            app.sessionForSubscriptions.stop()
+            app.sessionForSubscriptions = None
 
 @app.route('/status', methods = ['GET'])
 def status():
@@ -325,8 +322,9 @@ def subscriptions():
 @app.route('/subscribe', methods = ['GET'])
 def subscribe():
     try:
-        if app.sessionAsync is None:
-            app.sessionAsync = openBloombergSession(isAsync=True)
+        if app.sessionForSubscriptions is None:
+            app.sessionForSubscriptions = openBloombergSession()
+            app.allSubscriptions = {}
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:
@@ -342,7 +340,7 @@ def subscribe():
         return respond400(e)
 
     try:
-        _, sessionRestarted = openBloombergService(app.sessionAsync, "//blp/mktdata")
+        _, sessionRestarted = openBloombergService(app.sessionForSubscriptions, "//blp/mktdata")
         if sessionRestarted:
             app.allSubscriptions = {}
         subscriptionList = blpapi.SubscriptionList()
@@ -358,16 +356,16 @@ def subscribe():
                 resubscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
 
         if subscriptionList.size() != 0:
-            app.sessionAsync.subscribe(subscriptionList)
+            app.sessionForSubscriptions.subscribe(subscriptionList)
 
         if resubscriptionList.size() != 0:
             try:
-                app.sessionAsync.resubscribe(resubscriptionList)
+                app.sessionForSubscriptions.resubscribe(resubscriptionList)
             except Exception as e:
                 if client is not None:
                     client.captureException()
-                app.sessionAsync.unsubscribe(resubscriptionList)
-                app.sessionAsync.subscribe(resubscriptionList)
+                app.sessionForSubscriptions.unsubscribe(resubscriptionList)
+                app.sessionForSubscriptions.subscribe(resubscriptionList)
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:
@@ -384,8 +382,9 @@ def subscribe():
 @app.route('/unsubscribe', methods = ['GET'])
 def unsubscribe():
     try:
-        if app.sessionAsync is None:
-            app.sessionAsync = openBloombergSession(isAsync=True)
+        if app.sessionForSubscriptions is None:
+            app.sessionForSubscriptions = openBloombergSession()
+            app.allSubscriptions = {}
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:
@@ -399,7 +398,7 @@ def unsubscribe():
         return respond400(e)
 
     try:
-        _, sessionRestarted = openBloombergService(app.sessionAsync, "//blp/mktdata")
+        _, sessionRestarted = openBloombergService(app.sessionForSubscriptions, "//blp/mktdata")
         if sessionRestarted:
             app.allSubscriptions = {}
         subscriptionList = blpapi.SubscriptionList()
@@ -409,7 +408,7 @@ def unsubscribe():
                 del app.allSubscriptions[security]
             subscriptionList.add(security, correlationId=correlationId)
 
-        app.sessionAsync.unsubscribe(subscriptionList)
+        app.sessionForSubscriptions.unsubscribe(subscriptionList)
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:
@@ -427,10 +426,11 @@ def unsubscribe():
 @app.route('/latest', methods = ['GET'])
 def latest():
     try:
-        if app.sessionSync is None:
-            app.sessionSync = openBloombergSession()
-        if app.sessionAsync is None:
-            app.sessionAsync = openBloombergSession(isAsync=True)
+        if app.sessionForRequests is None:
+            app.sessionForRequests = openBloombergSession()
+        if app.sessionForSubscriptions is None:
+            app.sessionForSubscriptions = openBloombergSession()
+            app.allSubscriptions = {}
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:
@@ -445,7 +445,7 @@ def latest():
         return respond400(e)
 
     try:
-        payload = json.dumps(requestLatest(app.sessionSync, securities, fields)).encode()
+        payload = json.dumps(requestLatest(app.sessionForRequests, securities, fields)).encode()
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:
@@ -463,10 +463,11 @@ def latest():
 @app.route('/historical', methods = ['GET'])
 def historical():
     try:
-        if app.sessionSync is None:
-            app.sessionSync = openBloombergSession()
-        if app.sessionAsync is None:
-            app.sessionAsync = openBloombergSession(isAsync=True)
+        if app.sessionForRequests is None:
+            app.sessionForRequests = openBloombergSession()
+        if app.sessionForSubscriptions is None:
+            app.sessionForSubscriptions = openBloombergSession()
+            app.allSubscriptions = {}
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:
@@ -496,7 +497,7 @@ def historical():
         response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
         return response
     try:
-        payload = json.dumps(requestHistorical(app.sessionSync, securities, fields, startDate, endDate)).encode()
+        payload = json.dumps(requestHistorical(app.sessionForRequests, securities, fields, startDate, endDate)).encode()
     except Exception as e:
         handleBrokenSession(e)
         if client is not None:
@@ -525,26 +526,47 @@ def wireUpProductionDependencies():
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.WARNING)
 
+def handleSubscriptions():
+    eventHandler = SubscriptionEventHandler()
+    while True:
+        try:
+            if app.sessionForSubscriptions is None:
+                app.sessionForSubscriptions = openBloombergSession()
+                app.allSubscriptions = {}
+
+            event = app.sessionForSubscriptions.nextEvent(500)
+            eventHandler.processEvent(event, app.sessionForSubscriptions)
+        except Exception as e:
+            traceback.print_exc()
+            handleBrokenSession(e)
+            if client is not None:
+                client.captureException()
+            eventlet.sleep(1)
+        finally:
+            eventlet.sleep()
+
 def main(port = 6659):
-    app.sessionSync = None
-    app.sessionAsync = None
+    app.sessionForRequests = None
+    app.sessionForSubscriptions = None
     server = None
     try:
         try:
-            app.sessionSync = openBloombergSession()
-            app.sessionAsync = openBloombergSession(isAsync=True)
+            app.sessionForRequests = openBloombergSession()
+            app.sessionForSubscriptions = openBloombergSession()
+            app.allSubscriptions = {}
         except:
             traceback.print_exc()
             if client is not None:
                 client.captureException()
+        eventlet.spawn(handleSubscriptions)
         socketio.run(app, port = port)
     except KeyboardInterrupt:
         print("Ctrl+C received, exiting...")
     finally:
-        if app.sessionSync is not None:
-            app.sessionSync.stop()
-        if app.sessionAsync is not None:
-            app.sessionAsync.stop()
+        if app.sessionForRequests is not None:
+            app.sessionForRequests.stop()
+        if app.sessionForSubscriptions is not None:
+            app.sessionForSubscriptions.stop()
         if server is not None:
             server.socket.close()
 
@@ -567,7 +589,7 @@ if __name__ == "__main__":
 
     if args.simulator:
         print("Using blpapi_simulator")
-        import blpapi_simulator as blpapi
+        blpapi = eventlet.import_patched("blpapi_simulator")
         client = None
     else:
         wireUpProductionDependencies()

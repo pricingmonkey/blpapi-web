@@ -1,7 +1,9 @@
 import random
 import time
 from datetime import datetime, timedelta
-import threading
+from eventlet import queue
+from eventlet.green import threading
+import functools
 
 def merge_dicts(d1, d2):
     out = d1.copy()
@@ -109,7 +111,7 @@ class Event:
     SUBSCRIPTION_DATA = "SUBSCRIPTION_DATA"
     SUBSCRIPTION_STATUS = "SUBSCRIPTION_STATUS"
 
-    def __init__(self, messages, eventType=RESPONSE):
+    def __init__(self, messages, eventType):
         self.messages = messages
         self.index = 0
         self._eventType = eventType
@@ -214,24 +216,64 @@ class Message(Map):
     def __repr__(self):
         return self.__str__()
 
-class EventQueue:
-    def __init__(self):
-        self.index = 0
+class FiniteEventSource:
+   def __init__(self, messageSource, eventType):
+      self.index = 0
+      self.messages = messageSource.messages()
+      self.eventType = eventType
 
-    def attachRequest(self, request):
-        self.responses = [Event(request.messages())]
+   def nextEvent(self):
+      try:
+          return Event([self.messages[self.index]], self.eventType)
+      except IndexError:
+          return None
+      self.index += 1
+
+class InfiniteEventSource:
+   def __init__(self, messageSource, eventType):
+     self.messageSource = messageSource
+     self.eventType = eventType
+
+   def nextEvent(self):
+      return Event(self.messageSource.messages(), self.eventType)
+
+class EventQueue:
+    def attachEventSource(self, eventSource):
+        self.eventSource = eventSource
 
     def nextEvent(self, timeout):
-        try:
-            return self.responses[self.index]
-        except IndexError:
-            return None
-        self.index += 1
+        return self.eventSource.nextEvent()
+
+class QueueMessageSource:
+    def __init__(self, messageQueue):
+       self.messageQueue = messageQueue
+
+    def messages(self):
+       return [self.messageQueue.get()]
 
 class Session:
     def __init__(self, sessionOptions, processEvent=None):
         self.responses = []
+        self.eventQueue = None
         self.processEvent = processEvent
+        self.subscriptions = []
+        self.messageQueue = queue.Queue(100)
+        def produce():
+           while True:
+              if len(self.subscriptions) == 0:
+                 time.sleep(2)
+              numOfTopics = functools.reduce((lambda xs, x: x.size() + xs), self.subscriptions, 0)
+              for each in self.subscriptions:
+                 for message in each.messages():
+                    self.messageQueue.put(message)
+                    time.sleep((2 + 0.25 * random.random()) / (numOfTopics or 1))
+        threading.Thread(target=produce).start()
+        if self.processEvent is not None:
+            def consume():
+               while True:
+                  message = self.messageQueue.get()
+                  self.processEvent(Event([message], Event.SUBSCRIPTION_DATA), self)
+            threading.Thread(target=consume).start()
 
     def start(self):
         return True
@@ -247,14 +289,13 @@ class Session:
 
     def sendRequest(self, request, eventQueue=EventQueue()):
         self.eventQueue = eventQueue
-        self.eventQueue.attachRequest(request)
+        self.eventQueue.attachEventSource(FiniteEventSource(request, Event.RESPONSE))
 
     def subscribe(self, subscriptionList):
-        def tick():
-           while True:
-              time.sleep(2 + 0.25 * random.random())
-              self.processEvent(Event(subscriptionList.messages(), Event.SUBSCRIPTION_DATA), self)
-        threading.Thread(target=tick).start()
+        if self.eventQueue is None:
+            self.eventQueue = EventQueue()
+            self.eventQueue.attachEventSource(InfiniteEventSource(QueueMessageSource(self.messageQueue), Event.SUBSCRIPTION_DATA))
+        self.subscriptions.append(subscriptionList)
 
     def resubscribe(self, subscriptionList):
         pass
@@ -263,7 +304,10 @@ class Session:
         pass
 
     def nextEvent(self, timeout):
-        self.eventQueue.nextEvent(timeout)
+        if self.eventQueue is None:
+            time.sleep(timeout / 1000)
+            return Event([], Event.TIMEOUT)
+        return self.eventQueue.nextEvent(timeout)
 
 class SubscriptionList:
     class Subscription:
