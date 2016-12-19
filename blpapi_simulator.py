@@ -107,6 +107,7 @@ def Name(name):
 
 class Event:
     TIMEOUT = "TIMEOUT"
+    PARTIAL_RESPONSE = "PARTIAL_RESPONSE"
     RESPONSE = "RESPONSE"
     SUBSCRIPTION_DATA = "SUBSCRIPTION_DATA"
     SUBSCRIPTION_STATUS = "SUBSCRIPTION_STATUS"
@@ -217,17 +218,20 @@ class Message(Map):
         return self.__str__()
 
 class FiniteEventSource:
-   def __init__(self, messageSource, eventType):
+   def __init__(self, messageSource):
       self.index = 0
       self.messages = messageSource.messages()
-      self.eventType = eventType
 
    def nextEvent(self):
       try:
-          return Event([self.messages[self.index]], self.eventType)
+          if self.index == len(self.messages) - 1:
+              return Event([self.messages[self.index]], Event.RESPONSE)
+          else:
+              return Event([self.messages[self.index]], Event.PARTIAL_RESPONSE)
       except IndexError:
           return None
-      self.index += 1
+      finally:
+          self.index += 1
 
 class InfiniteEventSource:
    def __init__(self, messageSource, eventType):
@@ -289,7 +293,7 @@ class Session:
 
     def sendRequest(self, request, eventQueue=EventQueue()):
         self.eventQueue = eventQueue
-        self.eventQueue.attachEventSource(FiniteEventSource(request, Event.RESPONSE))
+        self.eventQueue.attachEventSource(FiniteEventSource(request))
 
     def subscribe(self, subscriptionList):
         if self.eventQueue is None:
