@@ -1,6 +1,5 @@
-from server import extractReferenceSecurityPricing, extractErrors
-from blpapi_simulator import *
-from simulator.message import Map, List
+from bloomberg.extract import extractReferenceSecurityPricing, extractErrors
+from simulator.message import Message, Map, List
 
 def test_simple():
     message = Message({
