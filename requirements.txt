@@ -1,5 +1,0 @@
-raven
-certifi
-flask
-flask-socketio
-eventlet
