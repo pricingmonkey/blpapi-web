@@ -8,266 +8,26 @@ import logging
 import argparse
 
 import time
-import imp, os, sys
-import threading
-import hashlib
-from urllib.parse import parse_qs, urlparse
 import json
 import traceback
 
 from flask import Flask, Response, request
 from flask_socketio import emit, SocketIO
 
+from bloomberg.utils import openBloombergSession
+from requests import latest, historical, subscribe, unsubscribe
+from requests.utils import allowCORS
+from subscriptions import handleSubscriptions
+from utils import get_main_dir, main_is_frozen
+
 app = Flask(__name__)
+app.url_map.strict_slashes = False
 app.allSubscriptions = {}
+app.register_blueprint(latest.blueprint, url_prefix='/latest')
+app.register_blueprint(historical.blueprint, url_prefix='/historical')
+app.register_blueprint(subscribe.blueprint, url_prefix='/subscribe')
+app.register_blueprint(unsubscribe.blueprint, url_prefix='/unsubscribe')
 socketio = SocketIO(app, async_mode="eventlet")
-
-class BrokenSessionException(Exception):
-    pass
-
-def main_is_frozen():
-    return (hasattr(sys, "frozen") or # new py2exe
-        hasattr(sys, "importers") # old py2exe
-        or imp.is_frozen("__main__")) # tools/freeze
-
-def get_main_dir():
-    if main_is_frozen():
-        return os.path.dirname(sys.executable)
-    return os.path.dirname(os.path.realpath(__file__))
-
-BLOOMBERG_HOST = "localhost"
-BLOOMBERG_PORT = 8194
-
-class SubscriptionEventHandler(object):
-    def getTimeStamp(self):
-        return time.strftime("%Y/%m/%d %X")
-
-    def processSubscriptionStatus(self, event):
-        timeStamp = self.getTimeStamp()
-        for msg in event:
-            security = msg.correlationIds()[0].value()
-            if msg.messageType() == "SubscriptionFailure":
-                if security in app.allSubscriptions:
-                    del app.allSubscriptions[security]
-                if client is not None:
-                    client.captureMessage(str({"security": security, "message": str(msg)}))
-        return True
-
-    def processSubscriptionDataEvent(self, event):
-        timeStamp = self.getTimeStamp()
-        for msg in event:
-            security = msg.correlationIds()[0].value()
-            pushMessage = {
-                "type": "SUBSCRIPTION_DATA",
-                "security": security,
-                "values": {str(each.name()): str(each.getValue()) for each in msg.asElement().elements() if each.numValues() > 0}
-            }
-            socketio.emit("action", pushMessage, namespace="/")
-            socketio.sleep(0)
-        return True
-
-    def processEvent(self, event, session):
-        try:
-            if event.eventType() == blpapi.Event.SUBSCRIPTION_DATA:
-                return self.processSubscriptionDataEvent(event)
-            elif event.eventType() == blpapi.Event.SUBSCRIPTION_STATUS:
-                return self.processSubscriptionStatus(event)
-            else:
-                return True
-        except blpapi.Exception as e:
-            traceback.print_exc()
-            if client is not None:
-                client.captureException()
-        return False
-
-def openBloombergSession():
-    sessionOptions = blpapi.SessionOptions()
-    sessionOptions.setServerHost(BLOOMBERG_HOST)
-    sessionOptions.setServerPort(BLOOMBERG_PORT)
-    sessionOptions.setAutoRestartOnDisconnection(True)
-
-    session = blpapi.Session(sessionOptions)
-
-    if not session.start():
-        raise Exception("Failed to start session on {}:{}".format(BLOOMBERG_HOST, BLOOMBERG_PORT))
-
-    return session
-
-def openBloombergService(session, serviceName):
-    sessionRestarted = False
-    if not session.openService(serviceName):
-        sessionRestarted = True
-        session.stop()
-        session.start()
-        if not session.openService(serviceName):
-            raise BrokenSessionException("Failed to open {}".format(serviceName))
-
-    return session.getService(serviceName), sessionRestarted
-
-def sendAndWait(session, request):
-    eventQueue=blpapi.EventQueue()
-    session.sendRequest(request, eventQueue=eventQueue)
-    responses = []
-    while(True):
-        ev = eventQueue.nextEvent(100)
-        if ev.eventType() == blpapi.Event.TIMEOUT:
-            continue
-
-        for msg in ev:
-            if msg.messageType() == blpapi.Name("ReferenceDataResponse") or msg.messageType() == blpapi.Name("HistoricalDataResponse"):
-                responses.append(msg)
-        responseCompletelyReceived = ev.eventType() == blpapi.Event.RESPONSE
-        if responseCompletelyReceived:
-            break
-    return responses
-
-def extractReferenceSecurityPricing(message):
-    result = []
-    if message.hasElement("securityData"):
-        for securityInformation in list(message.getElement("securityData").values()):
-            fields = []
-            for field in securityInformation.getElement("fieldData").elements():
-                fields.append({
-                    "name": str(field.name()),
-                    "value": field.getValue()
-                })
-            result.append({
-                "security": securityInformation.getElementValue("security"),
-                "fields": fields
-            })
-    return result
-
-def extractHistoricalSecurityPricing(message):
-    resultsForDate = {}
-    if message.hasElement("securityData"):
-        securityInformation = message.getElement("securityData")
-        security = securityInformation.getElementValue("security")
-        for fieldsOnDate in list(securityInformation.getElement("fieldData").values()):
-            fields = []
-            for fieldElement in fieldsOnDate.elements():
-                if str(fieldElement.name()) == "date":
-                    date = fieldElement.getValueAsString()
-                elif str(fieldElement.name()) == "relativeDate":
-                    pass
-                else: # assume it's the {fieldName -> fieldValue}
-                    fields.append({
-                        "name": str(fieldElement.name()),
-                        "value": fieldElement.getValue()
-                    })
-            if not date in resultsForDate:
-                resultsForDate[date] = {}
-            if not security in resultsForDate[date]:
-                resultsForDate[date][security] = []
-            for field in fields:
-                resultsForDate[date][security].append(field)
-
-    result = []
-    for date, securities in resultsForDate.items():
-        valuesForSecurities = []
-        for security, fields in securities.items():
-            valuesForSecurities.append({
-                "security": security,
-                "fields": fields
-            })
-        result.append({
-            "date": date,
-            "values": valuesForSecurities
-        })
-    return sorted(result, key=lambda each: each["date"])
-
-def extractError(errorElement):
-    category = errorElement.getElementValue("category")
-    if errorElement.hasElement("subcategory"):
-        subcategory = errorElement.getElementValue("subcategory")
-    else:
-        subcategory = None
-    message = errorElement.getElementValue("message")
-    return "{}/{} {}".format(category, subcategory, message)
-
-def extractErrors(message):
-    result = []
-    if message.hasElement("responseError"):
-        result.append(extractError(message.getElement("responseError")))
-    if message.hasElement("securityData"):
-        if message.getElement("securityData").isArray():
-           securityData = list(message.getElement("securityData").values())
-        else:
-           securityData = list([message.getElement("securityData")])
-        for securityInformation in securityData:
-            if securityInformation.hasElement("fieldExceptions"):
-                for fieldException in list(securityInformation.getElement("fieldExceptions").values()):
-                    error = extractError(fieldException.getElement("errorInfo"))
-                    result.append("{}: {}".format(error, fieldException.getElementValue("fieldId")))
-            if securityInformation.hasElement("securityError"):
-                error = extractError(securityInformation.getElement("securityError"))
-                result.append("{}: {}".format(error, securityInformation.getElementValue("security")))
-    return result
-
-def requestLatest(session, securities, fields):
-    try:
-        refDataService, _ = openBloombergService(session, "//blp/refdata")
-        request = refDataService.createRequest("ReferenceDataRequest")
-
-        request.set("returnFormattedValue", True)
-        for security in securities:
-            request.append("securities", security)
-
-        for field in fields:
-            request.append("fields", field)
-
-        responses = sendAndWait(session, request)
-
-        securityPricing = []
-        for response in responses:
-            securityPricing.extend(extractReferenceSecurityPricing(response))
-
-        errors = []
-        for response in responses:
-            errors.extend(extractErrors(response))
-        return { "response": securityPricing, "errors": errors }
-    except Exception as e:
-        raise
-
-def requestHistorical(session, securities, fields, startDate, endDate):
-    try:
-        refDataService, _ = openBloombergService(session, "//blp/refdata")
-        request = refDataService.createRequest("HistoricalDataRequest")
-
-        request.set("startDate", startDate)
-        request.set("endDate", endDate)
-        request.set("periodicitySelection", "DAILY");
-
-        for security in securities:
-            request.append("securities", security)
-
-        for field in fields:
-            request.append("fields", field)
-
-        responses = sendAndWait(session, request)
-
-        securityPricing = []
-        for response in responses:
-            securityPricing.extend(extractHistoricalSecurityPricing(response))
-
-        errors = []
-        for response in responses:
-            errors.extend(extractErrors(response))
-
-        return { "response": securityPricing, "errors": errors }
-    except Exception as e:
-        raise
-
-def allowCORS(host):
-    HOSTS = ["http://staging.pricingmonkey.com", "http://pricingmonkey.com", "http://localhost:8080", "http://localhost:8081"]
-    if host in HOSTS:
-        return host
-    else:
-        return "null"
-
-def generateEtag(obj):
-    sha1 = hashlib.sha1()
-    sha1.update("{}".format(obj).encode())
-    return '"{}"'.format(sha1.hexdigest())
 
 @app.route('/status', methods = ['OPTIONS'])
 @app.route('/subscriptions', methods = ['OPTIONS'])
@@ -279,27 +39,6 @@ def tellThemWhenCORSIsAllowed():
     response = Response("")
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
     return response
-
-def respond400(e):
-    response = Response("{0}: {1}".format(type(e).__name__, e).encode(), status=400)
-    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
-    traceback.print_exc()
-    return response
-
-def respond500(e):
-    response = Response("{0}: {1}".format(type(e).__name__, e).encode(), status=500)
-    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
-    traceback.print_exc()
-    return response
-
-def handleBrokenSession(e):
-    if isinstance(e, BrokenSessionException):
-        if not app.sessionForRequests is None:
-            app.sessionForRequests.stop()
-            app.sessionForRequests = None
-        if not app.sessionForSubscriptions is None:
-            app.sessionForSubscriptions.stop()
-            app.sessionForSubscriptions = None
 
 @app.route('/status', methods = ['GET'])
 def status():
@@ -319,201 +58,6 @@ def subscriptions():
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
     return response
 
-@app.route('/subscribe', methods = ['GET'])
-def subscribe():
-    try:
-        if app.sessionForSubscriptions is None:
-            app.sessionForSubscriptions = openBloombergSession()
-            app.allSubscriptions = {}
-    except Exception as e:
-        handleBrokenSession(e)
-        if client is not None:
-            client.captureException()
-        return respond500(e)
-    try:
-        securities = request.args.getlist('security') or []
-        fields = request.args.getlist('field') or []
-        interval = request.args.get('interval') or "2.0"
-    except Exception as e:
-        if client is not None:
-            client.captureException()
-        return respond400(e)
-
-    try:
-        _, sessionRestarted = openBloombergService(app.sessionForSubscriptions, "//blp/mktdata")
-        if sessionRestarted:
-            app.allSubscriptions = {}
-        subscriptionList = blpapi.SubscriptionList()
-        resubscriptionList = blpapi.SubscriptionList()
-        for security in securities:
-            correlationId = blpapi.CorrelationId(sys.intern(security))
-            if not security in app.allSubscriptions:
-                app.allSubscriptions[security] = list(fields)
-                subscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
-            else:
-                app.allSubscriptions[security] += fields
-                app.allSubscriptions[security] = list(set(app.allSubscriptions[security]))
-                resubscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
-
-        if subscriptionList.size() != 0:
-            app.sessionForSubscriptions.subscribe(subscriptionList)
-
-        if resubscriptionList.size() != 0:
-            try:
-                app.sessionForSubscriptions.resubscribe(resubscriptionList)
-            except Exception as e:
-                if client is not None:
-                    client.captureException()
-                app.sessionForSubscriptions.unsubscribe(resubscriptionList)
-                app.sessionForSubscriptions.subscribe(resubscriptionList)
-    except Exception as e:
-        handleBrokenSession(e)
-        if client is not None:
-            client.captureException()
-        return respond500(e)
-
-    response = Response(
-        json.dumps({ "message": "OK"}).encode(),
-        status=202,
-        mimetype='application/json')
-    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
-    return response
-
-@app.route('/unsubscribe', methods = ['GET'])
-def unsubscribe():
-    try:
-        if app.sessionForSubscriptions is None:
-            app.sessionForSubscriptions = openBloombergSession()
-            app.allSubscriptions = {}
-    except Exception as e:
-        handleBrokenSession(e)
-        if client is not None:
-            client.captureException()
-        return respond500(e)
-    try:
-        securities = request.args.getlist('security') or []
-    except Exception as e:
-        if client is not None:
-            client.captureException()
-        return respond400(e)
-
-    try:
-        _, sessionRestarted = openBloombergService(app.sessionForSubscriptions, "//blp/mktdata")
-        if sessionRestarted:
-            app.allSubscriptions = {}
-        subscriptionList = blpapi.SubscriptionList()
-        for security in securities:
-            correlationId = blpapi.CorrelationId(sys.intern(security))
-            if security in app.allSubscriptions:
-                del app.allSubscriptions[security]
-            subscriptionList.add(security, correlationId=correlationId)
-
-        app.sessionForSubscriptions.unsubscribe(subscriptionList)
-    except Exception as e:
-        handleBrokenSession(e)
-        if client is not None:
-            client.captureException()
-        return respond500(e)
-
-    response = Response(
-        json.dumps({ "message": "OK"}).encode(),
-        status=202,
-        mimetype='application/json')
-    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
-    return response
-
-# /latest?field=...&field=...&security=...&security=...
-@app.route('/latest', methods = ['GET'])
-def latest():
-    try:
-        if app.sessionForRequests is None:
-            app.sessionForRequests = openBloombergSession()
-        if app.sessionForSubscriptions is None:
-            app.sessionForSubscriptions = openBloombergSession()
-            app.allSubscriptions = {}
-    except Exception as e:
-        handleBrokenSession(e)
-        if client is not None:
-            client.captureException()
-        return respond500(e)
-    try:
-        securities = request.args.getlist('security') or []
-        fields = request.args.getlist('field') or []
-    except Exception as e:
-        if client is not None:
-            client.captureException()
-        return respond400(e)
-
-    try:
-        payload = json.dumps(requestLatest(app.sessionForRequests, securities, fields)).encode()
-    except Exception as e:
-        handleBrokenSession(e)
-        if client is not None:
-            client.captureException()
-        return respond500(e)
-
-    response = Response(
-        payload,
-        status=200,
-        mimetype='application/json')
-    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
-    return response
-
-# /historical?fields=[...]&securities=[...]
-@app.route('/historical', methods = ['GET'])
-def historical():
-    try:
-        if app.sessionForRequests is None:
-            app.sessionForRequests = openBloombergSession()
-        if app.sessionForSubscriptions is None:
-            app.sessionForSubscriptions = openBloombergSession()
-            app.allSubscriptions = {}
-    except Exception as e:
-        handleBrokenSession(e)
-        if client is not None:
-            client.captureException()
-        return respond500(e)
-    try:
-        securities = request.args.getlist('security') or []
-        fields = request.args.getlist('field') or []
-        startDate = request.args.get('startDate')
-        endDate = request.args.get('endDate')
-    except Exception as e:
-        if client is not None:
-            client.captureException()
-        return respond400(e)
-
-    etag = generateEtag({
-        "securities": securities,
-        "fields": fields,
-        "startDate": startDate,
-        "endDate": endDate
-    })
-    if request.headers.get('If-None-Match') == etag:
-        response = Response(
-            "",
-            status=304,
-            mimetype='application/json')
-        response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
-        return response
-    try:
-        payload = json.dumps(requestHistorical(app.sessionForRequests, securities, fields, startDate, endDate)).encode()
-    except Exception as e:
-        handleBrokenSession(e)
-        if client is not None:
-            client.captureException()
-        return respond500(e)
-
-    response = Response(
-        payload,
-        status=200,
-        mimetype='application/json')
-    response.headers['Etag'] = etag
-    response.headers['Cache-Control'] = "max-age=86400, must-revalidate"
-    response.headers['Vary'] = "Origin"
-    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
-    return response
-
 def wireUpProductionDependencies():
     global blpapi
     global client
@@ -526,26 +70,13 @@ def wireUpProductionDependencies():
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.WARNING)
 
-def handleSubscriptions():
-    eventHandler = SubscriptionEventHandler()
-    while True:
-        try:
-            if app.sessionForSubscriptions is None:
-                app.sessionForSubscriptions = openBloombergSession()
-                app.allSubscriptions = {}
-
-            event = app.sessionForSubscriptions.nextEvent(500)
-            eventHandler.processEvent(event, app.sessionForSubscriptions)
-        except Exception as e:
-            traceback.print_exc()
-            handleBrokenSession(e)
-            if client is not None:
-                client.captureException()
-            eventlet.sleep(1)
-        finally:
-            eventlet.sleep()
-
 def main(port = 6659):
+    import bloomberg.utils
+    bloomberg.utils.__dict__["blpapi"] = blpapi
+    subscribe.__dict__["blpapi"] = blpapi
+    unsubscribe.__dict__["blpapi"] = blpapi
+
+    app.client = client
     app.sessionForRequests = None
     app.sessionForSubscriptions = None
     server = None
@@ -558,8 +89,8 @@ def main(port = 6659):
             traceback.print_exc()
             if client is not None:
                 client.captureException()
-        eventlet.spawn(handleSubscriptions)
         socketio.run(app, port = port)
+        eventlet.spawn(handleSubscriptions)
     except KeyboardInterrupt:
         print("Ctrl+C received, exiting...")
     finally:
