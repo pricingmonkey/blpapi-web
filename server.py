@@ -23,6 +23,10 @@ from utils import get_main_dir, main_is_frozen
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 app.allSubscriptions = {}
+app.client = None
+app.sessionForRequests = None
+app.sessionForSubscriptions = None
+
 app.register_blueprint(latest.blueprint, url_prefix='/latest')
 app.register_blueprint(historical.blueprint, url_prefix='/historical')
 app.register_blueprint(subscribe.blueprint, url_prefix='/subscribe')
@@ -58,6 +62,16 @@ def subscriptions():
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
     return response
 
+def wireUpBlpapiImplementation(blpapi):
+    import bloomberg.utils
+    bloomberg.utils.__dict__["blpapi"] = blpapi
+    subscribe.__dict__["blpapi"] = blpapi
+    unsubscribe.__dict__["blpapi"] = blpapi
+
+def wireUpDevelopmentDependencies():
+    blpapi = eventlet.import_patched("blpapi_simulator")
+    client = None
+
 def wireUpProductionDependencies():
     global blpapi
     global client
@@ -71,14 +85,9 @@ def wireUpProductionDependencies():
     log.setLevel(logging.WARNING)
 
 def main(port = 6659):
-    import bloomberg.utils
-    bloomberg.utils.__dict__["blpapi"] = blpapi
-    subscribe.__dict__["blpapi"] = blpapi
-    unsubscribe.__dict__["blpapi"] = blpapi
+    wireUpBlpapiImplementation(blpapi)
 
     app.client = client
-    app.sessionForRequests = None
-    app.sessionForSubscriptions = None
     server = None
     try:
         try:
@@ -120,8 +129,7 @@ if __name__ == "__main__":
 
     if args.simulator:
         print("Using blpapi_simulator")
-        blpapi = eventlet.import_patched("blpapi_simulator")
-        client = None
+        wireUpDevelopmentDependencies()
     else:
         wireUpProductionDependencies()
     main(args.port)
