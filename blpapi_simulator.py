@@ -1,5 +1,4 @@
-import random
-import time
+import random, time, re
 from datetime import datetime, timedelta
 from eventlet import queue
 from eventlet.green import threading
@@ -36,6 +35,18 @@ class SessionOptions:
     def setAutoRestartOnDisconnection(self, enabled):
         pass
 
+def isValidSecurity(security):
+    strikeMatch = re.search(" (\d*\.?\d*) Comdty", security)
+    strike = None
+    if strikeMatch:
+        strike = float(strikeMatch.group(1))
+    if security.endswith("ERR"):
+        return False
+    elif strike and (strike < 50 or strike > 200):
+        return False
+    else:
+        return True
+
 class Request:
     def __init__(self, serviceType):
         self.params = {}
@@ -55,33 +66,35 @@ class Request:
     def messages(self):
         if self.serviceType == "ReferenceDataRequest":
             time.sleep(random.randint(2, 6) / 10)
-            correctSecurities, incorrectSecurities = [], []
+            validSecurities, invalidSecurities = [], []
 
             for s in self.params["securities"]:
-                if s.endswith("ERR"):
-                    incorrectSecurities.append(s)
+                strikeMatch = re.search(" (\d*\.?\d*) Comdty", s)
+                strike = None
+                if isValidSecurity(s):
+                    validSecurities.append(s)
                 else:
-                    correctSecurities.append(s)
+                    invalidSecurities.append(s)
             return [Message({
                 "securityData": List([Map({
                     "security": security,
                     "fieldData": Map({
                         field: randomFieldValue(field, security)
                     for field in self.params["fields"]})
-                }) for security in correctSecurities] + [
+                }) for security in validSecurities] + [
                     Map({
                         "security": security,
                         "fieldData": Map({}),
                         "fieldExceptions": List([Map({
                                 "errorInfo": Map({
-                                    "category": "CAT",
+                                    "category": "INCORRECT SECURITY",
                                     "subcategory": "SUBCAT",
                                     "message": "MSG"
                                 }),
                                 "fieldId": "FIELD_ID",
                                 "message": "MESSAGE"
                         })])
-                }) for security in incorrectSecurities]
+                }) for security in invalidSecurities]
             )})]
         if self.serviceType == "HistoricalDataRequest":
             time.sleep(random.randint(4, 8) / 10)
@@ -266,7 +279,7 @@ class Session:
            while True:
               if len(self.subscriptions) == 0:
                  time.sleep(2)
-              numOfTopics = functools.reduce((lambda xs, x: x.size() + xs), self.subscriptions, 0)
+              numOfTopics = len(self.subscriptions)
               for each in self.subscriptions:
                  for message in each.messages():
                     self.messageQueue.put(message)
@@ -299,13 +312,19 @@ class Session:
         if self.eventQueue is None:
             self.eventQueue = EventQueue()
             self.eventQueue.attachEventSource(InfiniteEventSource(QueueMessageSource(self.messageQueue), Event.SUBSCRIPTION_DATA))
-        self.subscriptions.append(subscriptionList)
+        for subscription in subscriptionList:
+            if isValidSecurity(subscription.topicOrSecurity):
+                self.subscriptions.append(subscription)
 
     def resubscribe(self, subscriptionList):
-        pass
+        for subscription in subscriptionList:
+            element = next([each for each in self.subscriptions if each.topicOrSecurity == subscrption.topicOrSecurity], None)
+            if not element:
+                raise Error("subscrption does not exist")
 
     def unsubscribe(self, subscriptionList):
-        pass
+        for subscription in subscriptionList:
+            self.subscriptions = [each for each in self.subscriptions if each.topicOrSecurity == subscription.topicOrSecurity]
 
     def nextEvent(self, timeout):
         if self.eventQueue is None:
@@ -320,29 +339,32 @@ class SubscriptionList:
             self.correlationId = correlationId
             self.topicOrSecurity = topicOrSecurity
 
+        def messages(self):
+            def generateFields(security, fields):
+                contents = {}
+                contents.update({field: randomFieldValue(field, security) for field in fields})
+                contents.update({"EXTRA_FIELD_%d" % (i): randomFieldValue(None, security) for i in range(200)})
+                if random.random() < 0.1:
+                    del contents["ASK"]
+                    del contents["BID"]
+                return contents
+            return [
+                Message(
+                    generateFields(self.topicOrSecurity, self.fields),
+                    self.correlationId)
+            ]
+
     def __init__(self):
         self.all = []
+
+    def __iter__(self):
+        return iter(self.all)
 
     def add(self, topicOrSecurity, fields=None, options=None, correlationId=None):
         self.all.append(self.Subscription(topicOrSecurity, fields, options, correlationId));
 
     def size(self):
         return len(self.all)
-
-    def messages(self):
-        def generateFields(security, fields):
-            contents = {}
-            contents.update({field: randomFieldValue(field, security) for field in fields})
-            contents.update({"EXTRA_FIELD_%d" % (i): randomFieldValue(None, security) for i in range(200)})
-            if random.random() < 0.1:
-                del contents["ASK"]
-                del contents["BID"]
-            return contents
-        return [
-            Message(
-                generateFields(subscription.topicOrSecurity, subscription.fields),
-                subscription.correlationId) for subscription in self.all
-        ]
 
 class CorrelationId():
     def __init__(self, string):
