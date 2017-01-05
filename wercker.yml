@@ -15,7 +15,7 @@ build:
 
     - script:
         name: pytest
-        code: python -m pytest
+        code: python -m pytest --cov=.
 
   after-steps:
       - slack-notifier:

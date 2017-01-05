@@ -11,3 +11,5 @@
 *.zip
 __pycache__
 dist/
+/htmlcov
+.coverage
