@@ -1,5 +1,6 @@
 from server import extractHistoricalSecurityPricing, extractErrors
 from blpapi_simulator import *
+from simulator.message import Map, List
 import pytest
 import datetime
 

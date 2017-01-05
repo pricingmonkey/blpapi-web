@@ -1,5 +1,6 @@
 from server import extractReferenceSecurityPricing, extractErrors
 from blpapi_simulator import *
+from simulator.message import Map, List
 
 def test_simple():
     message = Message({
