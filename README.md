@@ -12,11 +12,11 @@ Use Windows Power Shell 3 to run any of the following instructions.
 1. Open Power Shell.
 2. Run:
 
-    set-executionpolicy unrestricted -s cu
+        set-executionpolicy unrestricted -s cu
 
 3. Install scoop:
 
-    iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
+        iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
 
 4. Install latest version of Python 3.4 from https://www.python.org/downloads/.
 5. Go to https://sourceforge.net/projects/pywin32/files/pywin32/Build%20220/,
@@ -100,13 +100,13 @@ Before publishing the installer submit it to Norton Symantec for whitelisting: h
 2. Go to URL and install: https://www.microsoft.com/en-us/download/details.aspx?id=48145
 3. Go to a directory where deployment package was unzipped and run:
 
-    run-service.exe --startup auto install
-    run-service.exe start
+        run-service.exe --startup auto install
+        run-service.exe start
 
 * In order to debug you can run the server in terminal mode as well (make sure Windows
 service is stopped, otherwise this will not work):
 
-    run.exe
+        run.exe
 
 # Mac
 
