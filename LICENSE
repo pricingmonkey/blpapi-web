@@ -1,0 +1,33 @@
+BLOOMBERG is a registered trademark of Bloomberg Finance L.P. or its affiliates.
+
+All other trademarks and registered trademarks are the property of their respective owners.
+
+Web API for Bloomberg Market Data - exposes Bloomberg API (BLPAPI) through
+a localhost HTTP server.
+
+Copyright (C) 2016-2017 Pricing Monkey Ltd
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Additional restriction under GNU GPL version 3 section 7
+
+If you modify this Program, or any covered work, and make significant
+functional changes you may not redistribute it under any Pricing Monkey
+trademark, without Pricing Monkey Ltd's prior written consent.
+
+In addition, if you compile a modified version, as discussed above,
+with branding enabled, you will require Pricing Monkey Ltd's prior
+written permission.
+
+If you have any doubt, you may contact us at info@pricingmonkey.com.

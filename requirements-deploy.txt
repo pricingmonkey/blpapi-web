@@ -1,0 +1,3 @@
+git+https://github.com/filmackay/blpapi-py
+pypiwin32
+py2exe

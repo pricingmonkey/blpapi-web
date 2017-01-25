@@ -1,0 +1,25 @@
+box: python:3.4
+build:
+  steps:
+    - script:
+        name: virtualenv install
+        code: pip install virtualenv
+    - virtualenv:
+        name: setup virtual environment
+
+    - pip-install:
+        requirements_file: "requirements-dev.txt"
+
+    - pip-install:
+        requirements_file: "requirements.txt"
+
+    - script:
+        name: pytest
+        code: python -m pytest --cov=.
+
+  after-steps:
+      - slack-notifier:
+          url: $SLACK_URL
+          username: wercker
+          notify_on: "failed"
+

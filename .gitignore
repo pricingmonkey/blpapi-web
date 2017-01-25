@@ -1,0 +1,15 @@
+.DS_Store
+/.wercker/
+/.venv/
+/venv/
+/.cache/
+*~
+*.swp
+*.dll
+*.pyd
+*.pyc
+*.zip
+__pycache__
+dist/
+/htmlcov
+.coverage
