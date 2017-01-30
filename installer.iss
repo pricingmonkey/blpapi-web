@@ -1,6 +1,6 @@
 [Setup]
 AppName=Web API for Bloomberg Market Data
-AppVersion=2.3.0
+AppVersion=2.3.1
 AppPublisher=Pricing Monkey Ltd
 DefaultDirName={pf}\Pricing Monkey
 UninstallDisplayIcon={app}\uninstall.exe
