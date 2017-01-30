@@ -1,8 +1,9 @@
 [Setup]
 AppName=Web API for Bloomberg Market Data
-AppVersion=2.3.0
-AppPublisher=Pricing Monkey Ltd
+AppVersion=2.3-systray
+AppPublisher=Pricing Monkey Ltd.
 DefaultDirName={pf}\Pricing Monkey
+DefaultGroupName=Pricing Monkey
 UninstallDisplayIcon={app}\uninstall.exe
 Compression=lzma2
 SolidCompression=yes
@@ -22,15 +23,18 @@ Source: "build/*.*"; DestDir: "{app}"; Flags: recursesubdirs
 [Files]
 Source: "ext/vc_redist.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 
+[Icons]
+Name: "{userstartup}\Web API for Bloomberg Market Data"; Filename: "{app}\run-systray.exe"; IconFilename: "{app}\pricingmonkey.ico"; Comment: "Web API for Bloomberg Market Data"
+Name: "{group}\Web API for Bloomberg Market Data"; Filename: "{app}\run-systray.exe"; IconFilename: "{app}\pricingmonkey.ico"; Comment: "Web API for Bloomberg Market Data"
+Name: "{group}\Uninstall"; Filename: "{uninstallexe}"
+
 [Run]
 Filename: {tmp}\vc_redist.x64.exe; Parameters: "/install /quiet /norestart"; StatusMsg: Installing VC++ 20015 Redistributables...
-
-[Run]
-Filename: "{app}\run-service.exe"; WorkingDir: "{app}"; Parameters: "--startup auto install"; Flags: runhidden; StatusMsg: Finishing installation. Please wait, this might take few minutes..
-Filename: "{app}\run-service.exe"; WorkingDir: "{app}"; Parameters: "restart"; Flags: runhidden; StatusMsg: Finishing installation. Please wait, this might take few minutes..
+Filename: "sc"; Parameters: "stop BBApi"; Flags: shellexec runhidden
+Filename: "sc"; Parameters: "delete BBApi"; Flags: shellexec runhidden
 Filename: "sc"; Parameters: "delete ""Pricing Monkey Bloomberg Bridge"""; Flags: shellexec runhidden; StatusMsg: Finishing installation. Please wait, this might take few minutes..
-
+Filename: "{app}\run-systray.exe"; Flags: shellexec runhidden runminimized; StatusMsg: Finishing installation. Please wait, this might take few minutes..
 
 [UninstallRun]
-Filename: "{app}\run-service.exe"; WorkingDir: "{app}"; Parameters: "stop"; Flags: runhidden
+Filename: "sc"; Parameters: "stop BBApi"; Flags: shellexec runhidden
 Filename: "sc"; Parameters: "delete BBApi"; Flags: shellexec runhidden

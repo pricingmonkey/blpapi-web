@@ -50,7 +50,7 @@ def tellThemWhenCORSIsAllowed():
 @app.route('/status', methods = ['GET'])
 def status():
     response = Response(
-        json.dumps({ "status": "UP", "version": "2.3"}).encode(),
+        json.dumps({ "status": "UP", "version": "2.3-systray"}).encode(),
         status=200,
         mimetype='application/json')
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
@@ -126,7 +126,7 @@ def wireUpProductionDependencies():
     log.setLevel(logging.WARNING)
     startBbcommIfNecessary()
 
-def main(port = 6659):
+def main(ignore_first = None, port = 6659):
     wireUpBlpapiImplementation(blpapi)
 
     app.client = client
@@ -140,17 +140,19 @@ def main(port = 6659):
             traceback.print_exc()
             if client is not None:
                 client.captureException()
-        eventlet.spawn(lambda: handleSubscriptions(app, socketio))
+        handleSubscriptionsThread = eventlet.spawn(lambda: handleSubscriptions(app, socketio))
         socketio.run(app, port = port)
     except KeyboardInterrupt:
         print("Ctrl+C received, exiting...")
     finally:
+        if handleSubscriptionsThread is not None:
+            handleSubscriptionsThread.kill()
+        if server is not None:
+            server.socket.close()
         if app.sessionForRequests is not None:
             app.sessionForRequests.stop()
         if app.sessionForSubscriptions is not None:
             app.sessionForSubscriptions.stop()
-        if server is not None:
-            server.socket.close()
 
 if main_is_frozen():
     wireUpProductionDependencies()
@@ -174,5 +176,5 @@ if __name__ == "__main__":
         wireUpDevelopmentDependencies()
     else:
         wireUpProductionDependencies()
-    main(args.port)
+    main(port = args.port)
 
