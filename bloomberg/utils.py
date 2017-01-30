@@ -1,3 +1,8 @@
+import os
+import psutil
+import subprocess
+import traceback
+
 BLOOMBERG_HOST = "localhost"
 BLOOMBERG_PORT = 8194
 
@@ -13,7 +18,7 @@ def openBloombergSession():
     session = blpapi.Session(sessionOptions)
 
     if not session.start():
-        raise Exception("Failed to start session on {}:{}".format(BLOOMBERG_HOST, BLOOMBERG_PORT))
+        raise BrokenSessionException("Failed to start session on {}:{}".format(BLOOMBERG_HOST, BLOOMBERG_PORT))
 
     return session
 
@@ -48,4 +53,45 @@ def sendAndWait(session, request):
             break
     return responses
 
+def restartBbcomm(raven):
+    try:
+        os.system("taskkill /im bbcomm.exe /f")
+        startBbcomm()
+    except Exception:
+        if raven is not None:
+            raven.captureException()
+        else:
+            traceback.print_exc()
 
+def startBbcomm():
+    CREATE_NEW_CONSOLE = 0x00000010
+
+    try:
+        info = subprocess.STARTUPINFO()
+        info.dwFlags = 1
+        info.wShowWindow = 0
+        subprocess.Popen(["c:/blp/api/bbcomm.exe"],
+                        creationflags=CREATE_NEW_CONSOLE,
+                        startupinfo=info)
+    except FileNotFoundError:
+        try:
+            info = subprocess.STARTUPINFO()
+            info.dwFlags = 1
+            info.wShowWindow = 0
+            subprocess.Popen(["c:/blp/dapi/bbcomm.exe"],
+                            creationflags=CREATE_NEW_CONSOLE,
+                            startupinfo=info)
+        except FileNotFoundError:
+            pass
+
+def startBbcommIfNecessary(raven):
+    try:
+        bbcomm = next((proc for proc in psutil.process_iter() if proc.name() == "bbcomm.exe"), None)
+
+        if not bbcomm:
+            startBbcomm()
+    except Exception:
+        if raven is not None:
+            raven.captureException()
+        else:
+            traceback.print_exc()

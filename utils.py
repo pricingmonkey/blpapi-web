@@ -1,6 +1,6 @@
 import sys, imp, os
 
-from bloomberg.utils import BrokenSessionException
+from bloomberg.utils import BrokenSessionException, restartBbcomm
 
 def main_is_frozen():
     return (hasattr(sys, "frozen") or # new py2exe
@@ -21,4 +21,4 @@ def handleBrokenSession(app, e):
             app.sessionForSubscriptions.stop()
             app.sessionForSubscriptions = None
         app.allSubscriptions = {}
-
+        restartBbcomm(app.client)

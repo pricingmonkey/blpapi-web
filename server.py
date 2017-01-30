@@ -17,7 +17,7 @@ import psutil
 from flask import Flask, Response, request
 from flask_socketio import emit, SocketIO
 
-from bloomberg.utils import openBloombergSession
+from bloomberg.utils import openBloombergSession, startBbcommIfNecessary
 from requests import latest, historical, subscribe, unsubscribe, dev
 from requests.utils import allowCORS
 from subscriptions import handleSubscriptions
@@ -73,9 +73,6 @@ def wireUpBlpapiImplementation(blpapi):
     subscriptions.__dict__["blpapi"] = blpapi
     unsubscribe.__dict__["blpapi"] = blpapi
 
-def startBbcommIfNecessary():
-    pass
-
 def wireUpDevelopmentDependencies():
     global blpapi
     global client
@@ -99,7 +96,7 @@ def wireUpProductionDependencies():
 
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.WARNING)
-    startBbcommIfNecessary()
+    startBbcommIfNecessary(client)
 
 def main(port = 6659):
     wireUpBlpapiImplementation(blpapi)
