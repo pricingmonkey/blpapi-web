@@ -50,7 +50,7 @@ def tellThemWhenCORSIsAllowed():
 @app.route('/status', methods = ['GET'])
 def status():
     response = Response(
-        json.dumps({ "status": "UP", "version": "2.3.1"}).encode(),
+        json.dumps({ "status": "UP", "version": "2.3.2"}).encode(),
         status=200,
         mimetype='application/json')
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
