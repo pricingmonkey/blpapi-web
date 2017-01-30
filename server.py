@@ -74,32 +74,7 @@ def wireUpBlpapiImplementation(blpapi):
     unsubscribe.__dict__["blpapi"] = blpapi
 
 def startBbcommIfNecessary():
-    try:
-        bbcomm = next((proc for proc in psutil.process_iter() if proc.name() == "bbcomm.exe"), None)
-
-        if not bbcomm:
-            CREATE_NEW_CONSOLE = 0x00000010
-
-            try:
-                info = subprocess.STARTUPINFO()
-                info.dwFlags = 1
-                info.wShowWindow = 0
-                subprocess.Popen(["c:/blp/api/bbcomm.exe"],
-                                creationflags=CREATE_NEW_CONSOLE,
-                                startupinfo=info)
-            except FileNotFoundError:
-                try:
-                    info = subprocess.STARTUPINFO()
-                    info.dwFlags = 1
-                    info.wShowWindow = 0
-                    subprocess.Popen(["c:/blp/dapi/bbcomm.exe"],
-                                    creationflags=CREATE_NEW_CONSOLE,
-                                    startupinfo=info)
-                except FileNotFoundError:
-                    pass
-    except Exception:
-        if client is not None:
-            client.captureException()
+    pass
 
 def wireUpDevelopmentDependencies():
     global blpapi
