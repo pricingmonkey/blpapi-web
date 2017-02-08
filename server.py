@@ -73,12 +73,12 @@ def wireUpBlpapiImplementation(blpapi):
     import subscriptions
     subscriptions.__dict__["blpapi"] = blpapi
     unsubscribe.__dict__["blpapi"] = blpapi
+    dev.__dict__["blpapi"] = blpapi
 
 def wireUpDevelopmentDependencies():
     global blpapi
     global client
     blpapi = eventlet.import_patched("blpapi_simulator")
-    print(blpapi)
     client = None
     app.register_blueprint(dev.blueprint, url_prefix='/dev')
 

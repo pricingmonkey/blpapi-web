@@ -6,6 +6,13 @@ blueprint = Blueprint('dev', __name__)
 def raise_(ex):
     raise ex
 
+class BrokenSession:
+    def __init__(self, ignore):
+        pass
+
+    def start(self):
+        return False
+
 @blueprint.route('/requests/session/reset', methods = ['GET'])
 def resetSessionForRequests():
     app.sessionForRequests = None
@@ -14,6 +21,23 @@ def resetSessionForRequests():
 @blueprint.route('/subscriptions/session/reset', methods = ['GET'])
 def resetSessionForSubscriptions():
     app.sessionForSubscriptions = None
+    return Response("OK", status=200)
+
+OriginalSession = [None]
+@blueprint.route('/session/stop', methods = ['GET'])
+def stopSessionForSubscriptions():
+    OriginalSession[0] = blpapi.Session
+    blpapi.Session = BrokenSession
+    app.sessionForRequests = None
+    app.sessionForSubscriptions = None
+    return Response("OK", status=200)
+
+@blueprint.route('/session/start', methods = ['GET'])
+def startSessionForRequests():
+    if OriginalSession[0]:
+        blpapi.Session = OriginalSession[0]
+        app.sessionForRequests = None
+        app.sessionForSubscriptions = None
     return Response("OK", status=200)
 
 def functionOneTimeBroken(original):
