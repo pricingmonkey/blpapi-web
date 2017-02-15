@@ -38,13 +38,10 @@ socketio = SocketIO(app, async_mode="eventlet")
 
 @app.route('/status', methods = ['OPTIONS'])
 @app.route('/subscriptions', methods = ['OPTIONS'])
-@app.route('/latest', methods = ['OPTIONS'])
-@app.route('/historical', methods = ['OPTIONS'])
-@app.route('/subscribe', methods = ['OPTIONS'])
-@app.route('/unsubscribe', methods = ['OPTIONS'])
 def tellThemWhenCORSIsAllowed():
     response = Response("")
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    response.headers['Access-Control-Allow-Methods'] = ", ".join(["GET", "OPTIONS"])
     return response
 
 @app.route('/status', methods = ['GET'])

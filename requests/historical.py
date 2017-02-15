@@ -38,9 +38,15 @@ def requestHistorical(session, securities, fields, startDate, endDate):
     except Exception as e:
         raise
 
+@blueprint.route('/', methods = ['OPTIONS'])
+def tellThemWhenCORSIsAllowed():
+    response = Response("")
+    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    response.headers['Access-Control-Allow-Methods'] = ", ".join(["GET", "POST", "OPTIONS"])
+    return response
 
-# ?fields=[...]&securities=[...]
-@blueprint.route('/', methods = ['GET'])
+# ?security=...&security=...&field=...&field=...&startDate=...&endDate=...
+@blueprint.route('/', methods = ['GET', 'POST'])
 def index():
     try:
         if app.sessionForRequests is None:
@@ -54,10 +60,10 @@ def index():
             app.client.captureException()
         return respond500(e)
     try:
-        securities = request.args.getlist('security') or []
-        fields = request.args.getlist('field') or []
-        startDate = request.args.get('startDate')
-        endDate = request.args.get('endDate')
+        securities = request.values.getlist('security') or []
+        fields = request.values.getlist('field') or []
+        startDate = request.values.get('startDate')
+        endDate = request.values.get('endDate')
     except Exception as e:
         if app.client is not None:
             app.client.captureException()

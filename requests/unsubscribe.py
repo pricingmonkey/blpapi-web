@@ -8,6 +8,13 @@ from .utils import allowCORS, respond400, respond500
 
 blueprint = Blueprint('unsubscribe', __name__)
 
+@blueprint.route('/', methods = ['OPTIONS'])
+def tellThemWhenCORSIsAllowed():
+    response = Response("")
+    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    response.headers['Access-Control-Allow-Methods'] = ", ".join(["GET", "OPTIONS"])
+    return response
+
 @blueprint.route('/', methods = ['GET'])
 def unsubscribe():
     try:

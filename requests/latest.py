@@ -34,8 +34,15 @@ def requestLatest(session, securities, fields):
     except Exception as e:
         raise
 
-# ?field=...&field=...&security=...&security=...
-@blueprint.route('/', methods = ['GET'])
+@blueprint.route('/', methods = ['OPTIONS'])
+def tellThemWhenCORSIsAllowed():
+    response = Response("")
+    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    response.headers['Access-Control-Allow-Methods'] = ", ".join(["GET", "POST", "OPTIONS"])
+    return response
+
+# ?security=...&security=...&field=...&field=...
+@blueprint.route('/', methods = ['GET', 'POST'])
 def index():
     try:
         if app.sessionForRequests is None:
@@ -49,8 +56,8 @@ def index():
             app.client.captureException()
         return respond500(e)
     try:
-        securities = request.args.getlist('security') or []
-        fields = request.args.getlist('field') or []
+        securities = request.values.getlist('security') or []
+        fields = request.values.getlist('field') or []
     except Exception as e:
         if app.client is not None:
             app.client.captureException()

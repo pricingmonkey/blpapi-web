@@ -8,7 +8,14 @@ from .utils import allowCORS, respond400, respond500
 
 blueprint = Blueprint('subscribe', __name__)
 
-@blueprint.route('/', methods = ['GET'])
+@blueprint.route('/', methods = ['OPTIONS'])
+def tellThemWhenCORSIsAllowed():
+    response = Response("")
+    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    response.headers['Access-Control-Allow-Methods'] = ", ".join(["GET", "POST", "OPTIONS"])
+    return response
+
+@blueprint.route('/', methods = ['GET', 'POST'])
 def index():
     try:
         if app.sessionForSubscriptions is None:
@@ -20,9 +27,9 @@ def index():
             app.client.captureException()
         return respond500(e)
     try:
-        securities = request.args.getlist('security') or []
-        fields = request.args.getlist('field') or []
-        interval = request.args.get('interval') or "2.0"
+        securities = request.values.getlist('security') or []
+        fields = request.values.getlist('field') or []
+        interval = request.values.get('interval') or "2.0"
     except Exception as e:
         if app.client is not None:
             app.client.captureException()
