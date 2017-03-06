@@ -18,7 +18,7 @@ from flask import Flask, Response, request
 from flask_socketio import emit, SocketIO
 
 from bloomberg.utils import openBloombergSession, startBbcommIfNecessary
-from requests import latest, historical, subscribe, unsubscribe, dev
+from requests import latest, historical, intraday, subscribe, unsubscribe, dev
 from requests.utils import allowCORS
 from subscriptions import handleSubscriptions
 from utils import get_main_dir, main_is_frozen
@@ -32,12 +32,18 @@ app.sessionForSubscriptions = None
 
 app.register_blueprint(latest.blueprint, url_prefix='/latest')
 app.register_blueprint(historical.blueprint, url_prefix='/historical')
+app.register_blueprint(intraday.blueprint, url_prefix='/intraday')
 app.register_blueprint(subscribe.blueprint, url_prefix='/subscribe')
 app.register_blueprint(unsubscribe.blueprint, url_prefix='/unsubscribe')
 socketio = SocketIO(app, async_mode="eventlet")
 
 @app.route('/status', methods = ['OPTIONS'])
 @app.route('/subscriptions', methods = ['OPTIONS'])
+@app.route('/latest', methods = ['OPTIONS'])
+@app.route('/historical', methods = ['OPTIONS'])
+@app.route('/intraday', methods = ['OPTIONS'])
+@app.route('/subscribe', methods = ['OPTIONS'])
+@app.route('/unsubscribe', methods = ['OPTIONS'])
 def tellThemWhenCORSIsAllowed():
     response = Response("")
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))

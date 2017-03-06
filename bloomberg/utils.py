@@ -46,7 +46,7 @@ def sendAndWait(session, request):
             continue
 
         for msg in ev:
-            if msg.messageType() == blpapi.Name("ReferenceDataResponse") or msg.messageType() == blpapi.Name("HistoricalDataResponse"):
+            if msg.messageType() == blpapi.Name("ReferenceDataResponse") or msg.messageType() == blpapi.Name("HistoricalDataResponse") or msg.messageType() == blpapi.Name("IntradayBarResponse"):
                 responses.append(msg)
         responseCompletelyReceived = ev.eventType() == blpapi.Event.RESPONSE
         if responseCompletelyReceived:
