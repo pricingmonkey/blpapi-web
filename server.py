@@ -54,7 +54,7 @@ def tellThemWhenCORSIsAllowed():
 def status():
     status = "UP" if app.sessionForRequests or app.sessionForSubscriptions else "DOWN"
     response = Response(
-        json.dumps({ "status": status, "version": "2.3.2"}).encode(),
+        json.dumps({ "status": status, "version": "2.4.0"}).encode(),
         status=200,
         mimetype='application/json')
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
