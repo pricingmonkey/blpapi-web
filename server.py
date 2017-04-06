@@ -7,12 +7,13 @@ import encodings.idna
 import logging
 import argparse
 
-import time
+import time, random
 import json
 import traceback
 import sys
 import subprocess
 import psutil
+import npyscreen
 
 from flask import Flask, Response, request
 from flask_socketio import emit, SocketIO
@@ -26,6 +27,7 @@ from utils import get_main_dir, main_is_frozen
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 app.allSubscriptions = {}
+app.latestSubscriptionValues = {}
 app.client = None
 app.sessionForRequests = None
 app.sessionForSubscriptions = None
@@ -102,6 +104,33 @@ def wireUpProductionDependencies():
     log.setLevel(logging.WARNING)
     startBbcommIfNecessary(client)
 
+class TestApp(npyscreen.NPSAppManaged):
+    def while_waiting(self):
+        self.grid.values = []
+        for security, fields in app.allSubscriptions.items():
+            for field in fields:
+                self.grid.values.append([security, field, (app.latestSubscriptionValues.get(security) or {}).get(field)])
+        if self.grid.edit_cell and len(self.grid.values) != 0:
+            row, col = self.grid.edit_cell
+            self.security.value = self.grid.values[row][0]
+            self.security.display()
+            self.field.value = self.grid.values[row][1]
+            self.field.display()
+            self.value.value = self.grid.values[row][2] or "None"
+            self.value.display()
+        eventlet.sleep()
+
+    def onStart(self):
+        self.keypress_timeout_default = 1
+        F = self.addForm("MAIN", npyscreen.ActionForm, name = "Subscriptions")
+
+        self.security = F.add(npyscreen.TitleFixedText, name = "Security", relx = 5, rely = 2)
+        self.field = F.add(npyscreen.TitleFixedText, name = "Field", relx = 5, rely = 4)
+        self.value = F.add(npyscreen.TitleText, name = "Value", relx = 5, rely = 6)
+        self.grid = F.add(npyscreen.GridColTitles, relx = 5, rely = 10, col_titles = ['Security', 'Fields', 'Values'])
+
+        F.edit()
+
 def main(port = 6659):
     wireUpBlpapiImplementation(blpapi)
 
@@ -116,8 +145,13 @@ def main(port = 6659):
             traceback.print_exc()
             if client is not None:
                 client.captureException()
-        eventlet.spawn(lambda: handleSubscriptions(app, socketio))
-        socketio.run(app, port = port)
+        pool = eventlet.GreenPool()
+        pool.spawn(lambda: handleSubscriptions(app, socketio))
+        my_logger = logging.getLogger('my-logger')
+        my_logger.setLevel(logging.ERROR)
+        pool.spawn(lambda: socketio.run(app, port = port, log = my_logger))
+        pool.spawn(lambda: TestApp().run())
+        pool.waitall()
     except KeyboardInterrupt:
         print("Ctrl+C received, exiting...")
     finally:

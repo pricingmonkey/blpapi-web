@@ -44,6 +44,7 @@ class SubscriptionEventHandler(object):
                 "security": security,
                 "values": extractFieldValues(msg)
             }
+            self.app.latestSubscriptionValues[security] = extractFieldValues(msg)
             self.socketio.emit("action", pushMessage, namespace="/")
             self.socketio.sleep(0)
         return True
