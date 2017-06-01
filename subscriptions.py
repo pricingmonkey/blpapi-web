@@ -33,7 +33,7 @@ class SubscriptionEventHandler(object):
                     del self.app.allSubscriptions[security]
                 if self.app.client is not None:
                     self.app.client.captureMessage(str(msg), {
-                        extra: { security }
+                        "extra": { security }
                     })
         return True
 
