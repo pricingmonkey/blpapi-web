@@ -17,14 +17,17 @@ import psutil
 from flask import Flask, Response, request
 from flask_socketio import emit, SocketIO
 
-from bloomberg.utils import openBloombergSession, startBbcommIfNecessary
+from bloomberg.utils import openBloombergSession, startBbcommIfNecessary, BrokenSessionException
 from requests import latest, historical, intraday, subscribe, unsubscribe, dev
 from requests.utils import allowCORS
 from subscriptions import handleSubscriptions
 from utils import get_main_dir, main_is_frozen
 
+VERSION = "2.3.2"
 app = Flask(__name__)
+
 app.url_map.strict_slashes = False
+
 app.allSubscriptions = {}
 app.client = None
 app.sessionForRequests = None
@@ -54,7 +57,7 @@ def tellThemWhenCORSIsAllowed():
 def status():
     status = "UP" if app.sessionForRequests or app.sessionForSubscriptions else "DOWN"
     response = Response(
-        json.dumps({ "status": status, "version": "2.3.2"}).encode(),
+        json.dumps({ "status": status, "version": VERSION}).encode(),
         status=200,
         mimetype='application/json')
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
@@ -95,7 +98,9 @@ def wireUpProductionDependencies():
     client = Client(
         "https://ec16b2b639e642e49c59e922d2c7dc9b:2dd38313e1d44fd2bc2adb5a510639fc@sentry.io/100358?ca_certs={}/certifi/cacert.pem".format(get_main_dir()),
         transport=EventletHTTPTransport,
-        enable_breadcrumbs=False
+        enable_breadcrumbs=False,
+        release=VERSION,
+        ignore_exceptions=[BrokenSessionException],
     )
 
     log = logging.getLogger('werkzeug')
