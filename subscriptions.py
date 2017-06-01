@@ -32,9 +32,8 @@ class SubscriptionEventHandler(object):
                 if security in self.app.allSubscriptions:
                     del self.app.allSubscriptions[security]
                 if self.app.client is not None:
-                    self.app.client.captureMessage(str(msg), {
-                        "extra": { security }
-                    })
+                    self.app.client.captureMessage("SubscriptionFailure",
+                        extra={ 'security': security, 'description': str(msg) })
         return True
 
     def processSubscriptionDataEvent(self, event):
