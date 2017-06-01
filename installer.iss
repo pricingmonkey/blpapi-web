@@ -2,6 +2,7 @@
 AppName=Web API for Bloomberg Market Data
 AppVersion=2.3.2
 AppPublisher=Pricing Monkey Ltd
+LicenseFile=.\FULL_LICENSE
 DefaultDirName={pf}\Pricing Monkey
 UninstallDisplayIcon={app}\uninstall.exe
 Compression=lzma2
