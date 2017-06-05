@@ -2,6 +2,7 @@ import os
 import psutil
 import subprocess
 import traceback
+import datetime
 
 BLOOMBERG_HOST = "localhost"
 BLOOMBERG_PORT = 8194
@@ -53,7 +54,12 @@ def sendAndWait(session, request):
             break
     return responses
 
+BBCOMM_LAST_RESTARTED_AT = None
 def restartBbcomm(raven):
+    # debounce restarting for a few seconds, to allow bbcomm to fully initialise
+    if BBCOMM_LAST_RESTARTED_AT and (datetime.datetime.now() - BBCOMM_LAST_RESTARTED_AT).total_seconds() < 10:
+        return
+    BBCOMM_LAST_RESTARTED_AT = datetime.datetime.now()
     try:
         os.system("taskkill /im bbcomm.exe /f")
         startBbcomm()
