@@ -24,7 +24,7 @@ Source: "build/*.*"; DestDir: "{app}"; Flags: recursesubdirs
 Source: "ext/vc_redist.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 
 [Run]
-Filename: {tmp}\vc_redist.x64.exe; Parameters: "/install /quiet /norestart"; StatusMsg: Installing VC++ 20015 Redistributables...
+Filename: {tmp}\vc_redist.x64.exe; Parameters: "/install /quiet /norestart"; StatusMsg: Installing VC++ 2010 Redistributables...
 
 [Run]
 Filename: "{app}\run-service.exe"; WorkingDir: "{app}"; Parameters: "--startup auto install"; Flags: runhidden; StatusMsg: Finishing installation. Please wait, this might take few minutes..

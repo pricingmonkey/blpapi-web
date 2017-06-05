@@ -54,8 +54,10 @@ def sendAndWait(session, request):
             break
     return responses
 
+global BBCOMM_LAST_RESTARTED_AT
 BBCOMM_LAST_RESTARTED_AT = None
 def restartBbcomm(raven):
+    global BBCOMM_LAST_RESTARTED_AT
     # debounce restarting for a few seconds, to allow bbcomm to fully initialise
     if BBCOMM_LAST_RESTARTED_AT and (datetime.datetime.now() - BBCOMM_LAST_RESTARTED_AT).total_seconds() < 10:
         return
