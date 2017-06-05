@@ -1,6 +1,6 @@
 [Setup]
 AppName=Web API for Bloomberg Market Data
-AppVersion=2.3.2
+AppVersion=2.4.1
 AppPublisher=Pricing Monkey Ltd
 LicenseFile=.\FULL_LICENSE
 DefaultDirName={pf}\Pricing Monkey
