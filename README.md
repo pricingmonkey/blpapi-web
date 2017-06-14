@@ -42,7 +42,10 @@ Run:
     pip install -r requirements-dev.txt -r requirements.txt -r requirements-deploy.txt
     cp venv\Lib\site-packages\blpapi\_internals.pyd .
 
-If you get an error saying "Error: Microsoft Visual C++ 10.0 is required" please follow instructions from here: http://stackoverflow.com/questions/28251314/error-microsoft-visual-c-10-0-is-required-unable-to-find-vcvarsall-bat
+If you get an error saying "Error: Microsoft Visual C++ 10.0 is required" please follow instructions from here:
+(preferrably) https://stackoverflow.com/a/35958285/6306919
+or here:
+(in case previous solution doesn't work) http://stackoverflow.com/questions/28251314/error-microsoft-visual-c-10-0-is-required-unable-to-find-vcvarsall-bat
 
 # Run (development instructions)
 
