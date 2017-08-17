@@ -1,6 +1,7 @@
 import eventlet
 eventlet.monkey_patch()
 
+import os
 import sys
 import win32serviceutil
 import win32service
@@ -34,7 +35,7 @@ class BloombergBridgeService(win32serviceutil.ServiceFramework):
 
     def main(self):
         print("main")
-        sys.stdout = sys.stderr = open("c:\Windows\Logs\pricing-monkey.log", "a")
+        sys.stdout = sys.stderr = open(os.devnull, "w")
         eventlet.spawn(start_server)
         while self.isAlive:
             time.sleep(5)
