@@ -3,7 +3,14 @@ from flask import request, Response
 import hashlib, traceback
 
 def allowCORS(host):
-    HOSTS = ["http://staging.pricingmonkey.com", "http://pricingmonkey.com", "http://localhost:8080", "http://localhost:8081"]
+    HOSTS = [
+        "https://staging.pricingmonkey.com",
+        "http://staging.pricingmonkey.com",
+        "https://pricingmonkey.com",
+        "http://pricingmonkey.com",
+        "http://localhost:8080",
+        "http://localhost:8081"
+    ]
     if host in HOSTS:
         return host
     else:
