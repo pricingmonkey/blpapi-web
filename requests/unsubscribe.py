@@ -12,27 +12,10 @@ blueprint = Blueprint('unsubscribe', __name__)
 def tellThemWhenCORSIsAllowed():
     response = Response("")
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
-    response.headers['Access-Control-Allow-Methods'] = ", ".join(["GET", "OPTIONS"])
+    response.headers['Access-Control-Allow-Methods'] = ", ".join(["OPTIONS", "GET", "POST", "DELETE"])
     return response
 
-@blueprint.route('/', methods = ['GET'])
-def unsubscribe():
-    try:
-        if app.sessionForSubscriptions is None:
-            app.sessionForSubscriptions = openBloombergSession()
-            app.allSubscriptions = {}
-    except Exception as e:
-        handleBrokenSession(app, e)
-        if app.client is not None:
-            app.client.captureException()
-        return respond500(e)
-    try:
-        securities = request.args.getlist('security') or []
-    except Exception as e:
-        if app.client is not None:
-            app.client.captureException()
-        return respond400(e)
-
+def doUnsubscribe(securities):
     try:
         _, sessionRestarted = openBloombergService(app.sessionForSubscriptions, "//blp/mktdata")
         if sessionRestarted:
@@ -58,3 +41,37 @@ def unsubscribe():
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
     return response
 
+@blueprint.route('/', methods = ['DELETE'])
+def unsubscribeAll():
+    try:
+        if app.sessionForSubscriptions is None:
+            app.sessionForSubscriptions = openBloombergSession()
+            app.allSubscriptions = {}
+    except Exception as e:
+        handleBrokenSession(app, e)
+        if app.client is not None:
+            app.client.captureException()
+        return respond500(e)
+
+    return doUnsubscribe(list(app.allSubscriptions.keys()))
+
+@blueprint.route('/', methods = ['GET', 'POST'])
+def unsubscribe():
+    try:
+        if app.sessionForSubscriptions is None:
+            app.sessionForSubscriptions = openBloombergSession()
+            app.allSubscriptions = {}
+    except Exception as e:
+        handleBrokenSession(app, e)
+        if app.client is not None:
+            app.client.captureException()
+        return respond500(e)
+
+    try:
+        securities = request.values.getlist('security') or []
+    except Exception as e:
+        if app.client is not None:
+            app.client.captureException()
+        return respond400(e)
+
+    return doUnsubscribe(securities)
