@@ -102,6 +102,7 @@ def wireUpProductionDependencies():
     #     release=VERSION,
     #     ignore_exceptions=[BrokenSessionException],
     # )
+    client = None
 
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.WARNING)
