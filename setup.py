@@ -5,7 +5,7 @@ class Target:
     def __init__(self, **kw):
         self.__dict__.update(kw)
 
-        self.version = "2.4.2"
+        self.version = "2.5.0"
         self.company_name = "Pricing Monkey Ltd"
         self.copyright = "Pricing Monkey Ltd"
         self.name = "Web API for Bloomberg Market Data"
