@@ -1,7 +1,8 @@
 import eventlet
 eventlet.monkey_patch()
 
-import os
+import tempfile
+import path
 import sys
 import win32serviceutil
 import win32service
@@ -15,27 +16,27 @@ class BloombergBridgeService(win32serviceutil.ServiceFramework):
     _svc_display_name_ = "Web API for Bloomberg Market Data"
 
     def __init__(self,args):
-        print("init")
+        print("Initialising...")
         win32serviceutil.ServiceFramework.__init__(self,args)
         self.hWaitStop = win32event.CreateEvent(None,0,0,None)
         self.isAlive = True
 
     def SvcStop(self):
-        servicemanager.LogInfoMsg("Stopping")
+        servicemanager.LogInfoMsg("Stopping...")
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
         win32event.SetEvent(self.hWaitStop)
         self.isAlive = False
 
     def SvcDoRun(self):
-        print("run")
+        print("Starting...")
         servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,
                               servicemanager.PYS_SERVICE_STARTED,
                               (self._svc_name_,''))
         self.main()
 
     def main(self):
-        print("main")
-        sys.stdout = sys.stderr = open(os.devnull, "w")
+        print("Started")
+        sys.stdout = sys.stderr = open(path.resolve(tempfile.tempdir, "pricingmonkey.log"), "w")
         eventlet.spawn(start_server)
         while self.isAlive:
             time.sleep(5)
