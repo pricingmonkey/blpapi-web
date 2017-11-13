@@ -2,7 +2,7 @@ import eventlet
 eventlet.monkey_patch()
 
 import tempfile
-import path
+import os
 import sys
 import win32serviceutil
 import win32service
@@ -36,7 +36,7 @@ class BloombergBridgeService(win32serviceutil.ServiceFramework):
 
     def main(self):
         print("Started")
-        sys.stdout = sys.stderr = open(path.resolve(tempfile.tempdir, "pricingmonkey.log"), "w")
+        sys.stdout = sys.stderr = open(os.path.join(tempfile.gettempdir(), "pricingmonkey.log"), "w")
         eventlet.spawn(start_server)
         while self.isAlive:
             time.sleep(5)
