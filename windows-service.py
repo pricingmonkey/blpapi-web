@@ -12,14 +12,6 @@ import win32serviceutil
 import win32service
 import win32event
 import servicemanager
-servicemanager.LogInfoMsg("Logging to: " + log_location)
-
-try:
-    from server import main as start_server
-except Exception as e:
-    print("Import error: " + str(e))
-    servicemanager.LogErrorMsg("Import error: " + str(e))
-    raise Exception("import error: " + str(e))
 
 class BloombergBridgeService(win32serviceutil.ServiceFramework):
     _svc_name_ = "BBApi"
@@ -28,6 +20,7 @@ class BloombergBridgeService(win32serviceutil.ServiceFramework):
     def __init__(self, args):
         try:
             win32serviceutil.ServiceFramework.__init__(self,args)
+            servicemanager.LogInfoMsg("Logging to: " + log_location)
             print("Initialising...")
             servicemanager.LogInfoMsg("Initialising...")
             self.hWaitStop = win32event.CreateEvent(None,0,0,None)
@@ -60,6 +53,8 @@ class BloombergBridgeService(win32serviceutil.ServiceFramework):
             servicemanager.LogErrorMsg("Error: " + str(e))
 
     def main(self):
+        from server import main as start_server
+
         eventlet.spawn(start_server)
         print("Started")
         servicemanager.LogInfoMsg("Started")

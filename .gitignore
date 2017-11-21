@@ -5,7 +5,7 @@
 /.cache/
 *~
 *.swp
-*.dll
+./*.dll
 *.pyd
 *.pyc
 *.zip

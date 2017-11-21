@@ -22,7 +22,7 @@ service = Target(
 )
 
 setup(
-    data_files = [('./certifi', ['./certifi/cacert.pem'])],
+    data_files = [('./blpapi3_64.dll', ['./ext/blpapi3_64.dll'])],
     options = {
         "py2exe": {
             "dist_dir": "./build",
