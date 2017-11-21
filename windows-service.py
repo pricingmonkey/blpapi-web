@@ -1,21 +1,24 @@
+import eventlet
+eventlet.monkey_patch()
+
+import tempfile
+import os
+import sys
+import time
+log_location = os.path.join(tempfile.gettempdir(), "pricingmonkey.log")
+sys.stdout = sys.stderr = open(log_location, "a")
+
+import win32serviceutil
+import win32service
+import win32event
+import servicemanager
+servicemanager.LogInfoMsg("Logging to: " + log_location)
+
 try:
-    import eventlet
-    eventlet.monkey_patch()
-
-    import tempfile
-    import os
-    import sys
-    log_location = os.path.join(tempfile.gettempdir(), "pricingmonkey.log")
-    sys.stdout = sys.stderr = open(log_location, "a")
-
-    import win32serviceutil
-    import win32service
-    import win32event
-    import servicemanager
-    import time
     from server import main as start_server
 except Exception as e:
-    print("import error: " + str(e))
+    print("Import error: " + str(e))
+    servicemanager.LogErrorMsg("Import error: " + str(e))
     raise Exception("import error: " + str(e))
 
 class BloombergBridgeService(win32serviceutil.ServiceFramework):
@@ -25,7 +28,6 @@ class BloombergBridgeService(win32serviceutil.ServiceFramework):
     def __init__(self, args):
         try:
             win32serviceutil.ServiceFramework.__init__(self,args)
-            servicemanager.LogInfoMsg("Logging to: " + log_location)
             print("Initialising...")
             servicemanager.LogInfoMsg("Initialising...")
             self.hWaitStop = win32event.CreateEvent(None,0,0,None)
