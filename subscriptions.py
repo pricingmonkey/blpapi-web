@@ -12,8 +12,7 @@ def extractFieldValues(message):
             try:
                 d[str(each.name())] = each.getValueAsString()
             except Exception as e:
-                if self.app.client is not None:
-                    self.app.client.captureException()
+                traceback.print_exc()
     return d
 
 class SubscriptionEventHandler(object):
@@ -31,9 +30,7 @@ class SubscriptionEventHandler(object):
             if msg.messageType() == "SubscriptionFailure":
                 if security in self.app.allSubscriptions:
                     del self.app.allSubscriptions[security]
-                if self.app.client is not None:
-                    self.app.client.captureMessage("SubscriptionFailure",
-                        extra={ 'security': security, 'description': str(msg) })
+                print("SubscriptionFailure: " + str({ 'security': security, 'description': str(msg) }))
         return True
 
     def processSubscriptionDataEvent(self, event):
@@ -59,8 +56,6 @@ class SubscriptionEventHandler(object):
                 return True
         except blpapi.Exception as e:
             traceback.print_exc()
-            if self.app.client is not None:
-                self.app.client.captureException()
         return False
 
 def handleSubscriptions(app, socketio):
@@ -76,8 +71,6 @@ def handleSubscriptions(app, socketio):
         except Exception as e:
             traceback.print_exc()
             handleBrokenSession(app, e)
-            if app.client is not None:
-                app.client.captureException()
             eventlet.sleep(1)
         finally:
             eventlet.sleep()

@@ -1,4 +1,5 @@
 import json, sys
+import traceback
 from flask import Blueprint, current_app as app, request, Response
 
 from bloomberg.utils import openBloombergSession, openBloombergService
@@ -30,8 +31,7 @@ def doUnsubscribe(securities):
         app.sessionForSubscriptions.unsubscribe(subscriptionList)
     except Exception as e:
         handleBrokenSession(app, e)
-        if app.client is not None:
-            app.client.captureException()
+        traceback.print_exc()
         return respond500(e)
 
     response = Response(
@@ -49,8 +49,7 @@ def unsubscribeAll():
             app.allSubscriptions = {}
     except Exception as e:
         handleBrokenSession(app, e)
-        if app.client is not None:
-            app.client.captureException()
+        traceback.print_exc()
         return respond500(e)
 
     return doUnsubscribe(list(app.allSubscriptions.keys()))
@@ -63,15 +62,13 @@ def unsubscribe():
             app.allSubscriptions = {}
     except Exception as e:
         handleBrokenSession(app, e)
-        if app.client is not None:
-            app.client.captureException()
+        traceback.print_exc()
         return respond500(e)
 
     try:
         securities = request.values.getlist('security') or []
     except Exception as e:
-        if app.client is not None:
-            app.client.captureException()
+        traceback.print_exc()
         return respond400(e)
 
     return doUnsubscribe(securities)

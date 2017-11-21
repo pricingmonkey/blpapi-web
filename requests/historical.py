@@ -1,4 +1,5 @@
 import json
+import traceback
 from flask import Blueprint, current_app as app, request, Response
 
 from bloomberg.utils import openBloombergSession, openBloombergService, sendAndWait
@@ -56,8 +57,7 @@ def index():
             app.allSubscriptions = {}
     except Exception as e:
         handleBrokenSession(app, e)
-        if app.client is not None:
-            app.client.captureException()
+        traceback.print_exc()
         return respond500(e)
     try:
         securities = request.values.getlist('security') or []
@@ -65,8 +65,7 @@ def index():
         startDate = request.values.get('startDate')
         endDate = request.values.get('endDate')
     except Exception as e:
-        if app.client is not None:
-            app.client.captureException()
+        traceback.print_exc()
         return respond400(e)
 
     etag = generateEtag({
@@ -86,8 +85,7 @@ def index():
         payload = json.dumps(requestHistorical(app.sessionForRequests, securities, fields, startDate, endDate)).encode()
     except Exception as e:
         handleBrokenSession(app, e)
-        if app.client is not None:
-            app.client.captureException()
+        traceback.print_exc()
         return respond500(e)
 
     response = Response(

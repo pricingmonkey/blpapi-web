@@ -29,7 +29,6 @@ app = Flask(__name__)
 app.url_map.strict_slashes = False
 
 app.allSubscriptions = {}
-app.client = None
 app.sessionForRequests = None
 app.sessionForSubscriptions = None
 
@@ -83,35 +82,20 @@ def wireUpBlpapiImplementation(blpapi):
 
 def wireUpDevelopmentDependencies():
     global blpapi
-    global client
     blpapi = eventlet.import_patched("blpapi_simulator")
-    client = None
     app.register_blueprint(dev.blueprint, url_prefix='/dev')
 
 def wireUpProductionDependencies():
     global blpapi
-    global client
     import blpapi
-
-    # from raven.transport.eventlet import EventletHTTPTransport
-    # from raven import Client
-    # client = Client(
-    #     "https://ec16b2b639e642e49c59e922d2c7dc9b:2dd38313e1d44fd2bc2adb5a510639fc@sentry.io/100358?ca_certs={}/certifi/cacert.pem".format(get_main_dir()),
-    #     transport=EventletHTTPTransport,
-    #     enable_breadcrumbs=False,
-    #     release=VERSION,
-    #     ignore_exceptions=[BrokenSessionException],
-    # )
-    client = None
 
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.WARNING)
-    startBbcommIfNecessary(client)
+    startBbcommIfNecessary()
 
 def main(port = 6659):
     wireUpBlpapiImplementation(blpapi)
 
-    app.client = client
     server = None
     try:
         try:
@@ -120,8 +104,6 @@ def main(port = 6659):
             app.allSubscriptions = {}
         except:
             traceback.print_exc()
-            if client is not None:
-                client.captureException()
         eventlet.spawn(lambda: handleSubscriptions(app, socketio))
         socketio.run(app, port = port)
     except KeyboardInterrupt:

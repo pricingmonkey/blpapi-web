@@ -21,4 +21,4 @@ def handleBrokenSession(app, e):
             app.sessionForSubscriptions.stop()
             app.sessionForSubscriptions = None
         app.allSubscriptions = {}
-        restartBbcomm(app.client)
+        restartBbcomm()

@@ -29,7 +29,7 @@ setup(
             "compressed": True, 
             "bundle_files": 3, 
             "includes": ["_internals", "urllib", "engineio.async_eventlet", "engineio.async_threading"],
-            "packages": ["blpapi", "encodings", "raven", "eventlet"]
+            "packages": ["blpapi", "encodings", "eventlet"]
         }},
         console=[standalone_server],
     service=[service]

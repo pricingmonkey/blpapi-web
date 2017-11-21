@@ -1,5 +1,6 @@
 import dateutil.parser
 import json
+import traceback
 from flask import Blueprint, current_app as app, request, Response
 
 from bloomberg.utils import openBloombergSession, openBloombergService, sendAndWait
@@ -49,8 +50,7 @@ def index():
             app.allSubscriptions = {}
     except Exception as e:
         handleBrokenSession(app, e)
-        if app.client is not None:
-            app.client.captureException()
+        traceback.print_exc()
         return respond500(e)
     try:
         securities = request.args.getlist('security') or []
@@ -58,16 +58,14 @@ def index():
         startDateTime = dateutil.parser.parse(request.args.get('startDateTime'))
         endDateTime = dateutil.parser.parse(request.args.get('endDateTime'))
     except Exception as e:
-        if app.client is not None:
-            app.client.captureException()
+        traceback.print_exc()
         return respond400(e)
 
     try:
         payload = json.dumps(requestIntraday(app.sessionForRequests, securities, eventTypes, startDateTime, endDateTime)).encode()
     except Exception as e:
         handleBrokenSession(app, e)
-        if app.client is not None:
-            app.client.captureException()
+        traceback.print_exc()
         return respond500(e)
 
     response = Response(

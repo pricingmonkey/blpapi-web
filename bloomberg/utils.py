@@ -56,7 +56,7 @@ def sendAndWait(session, request):
 
 global BBCOMM_LAST_RESTARTED_AT
 BBCOMM_LAST_RESTARTED_AT = None
-def restartBbcomm(raven):
+def restartBbcomm():
     global BBCOMM_LAST_RESTARTED_AT
     # debounce restarting for a few seconds, to allow bbcomm to fully initialise
     if BBCOMM_LAST_RESTARTED_AT and (datetime.datetime.now() - BBCOMM_LAST_RESTARTED_AT).total_seconds() < 10:
@@ -66,10 +66,7 @@ def restartBbcomm(raven):
         os.system("taskkill /im bbcomm.exe /f")
         startBbcomm()
     except Exception:
-        if raven is not None:
-            raven.captureException()
-        else:
-            traceback.print_exc()
+        traceback.print_exc()
 
 def startBbcomm():
     CREATE_NEW_CONSOLE = 0x00000010
@@ -92,14 +89,11 @@ def startBbcomm():
         except FileNotFoundError:
             pass
 
-def startBbcommIfNecessary(raven):
+def startBbcommIfNecessary():
     try:
         bbcomm = next((proc for proc in psutil.process_iter() if proc.name() == "bbcomm.exe"), None)
 
         if not bbcomm:
             startBbcomm()
     except Exception:
-        if raven is not None:
-            raven.captureException()
-        else:
-            traceback.print_exc()
+        traceback.print_exc()
