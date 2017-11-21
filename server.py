@@ -23,7 +23,7 @@ from requests.utils import allowCORS
 from subscriptions import handleSubscriptions
 from utils import get_main_dir, main_is_frozen
 
-VERSION = "2.5.1"
+VERSION = "2.5.2"
 app = Flask(__name__)
 
 app.url_map.strict_slashes = False
