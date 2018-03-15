@@ -42,7 +42,7 @@ def sendAndWait(session, request):
     session.sendRequest(request, eventQueue=eventQueue)
     responses = []
     while(True):
-        ev = eventQueue.nextEvent(100)
+        ev = eventQueue.nextEvent()
         if ev.eventType() == blpapi.Event.TIMEOUT:
             continue
 

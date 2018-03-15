@@ -66,7 +66,7 @@ def handleSubscriptions(app, socketio):
                 app.sessionForSubscriptions = openBloombergSession()
                 app.allSubscriptions = {}
 
-            event = app.sessionForSubscriptions.nextEvent(500)
+            event = app.sessionForSubscriptions.nextEvent()
             eventHandler.processEvent(event, app.sessionForSubscriptions)
         except Exception as e:
             traceback.print_exc()
