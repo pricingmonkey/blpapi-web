@@ -71,7 +71,7 @@ def handleSubscriptions(app, socketio):
         except Exception as e:
             traceback.print_exc()
             handleBrokenSession(app, e)
-            eventlet.sleep(1)
+            socketio.sleep(1)
         finally:
-            eventlet.sleep()
+            socketio.sleep()
 

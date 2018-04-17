@@ -104,7 +104,7 @@ def main(port = 6659):
             app.allSubscriptions = {}
         except:
             traceback.print_exc()
-        eventlet.spawn(lambda: handleSubscriptions(app, socketio))
+        socketio.start_background_task(lambda: handleSubscriptions(app, socketio))
         socketio.run(app, port = port)
     except KeyboardInterrupt:
         print("Ctrl+C received, exiting...")
