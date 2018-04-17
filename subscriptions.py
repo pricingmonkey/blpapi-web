@@ -35,15 +35,21 @@ class SubscriptionEventHandler(object):
 
     def processSubscriptionDataEvent(self, event):
         timeStamp = self.getTimeStamp()
+        messages = []
         for msg in event:
             security = msg.correlationIds()[0].value()
-            pushMessage = {
+            messages.append({
                 "type": "SUBSCRIPTION_DATA",
                 "security": security,
                 "values": extractFieldValues(msg)
-            }
-            self.socketio.emit("action", pushMessage, namespace="/")
-            self.socketio.sleep(0)
+            })
+            if len(messages) > 10:
+                self.socketio.emit("action", messages, namespace="/")
+                self.socketio.sleep(5 / 1000)
+                messages = []
+        if len(messages):
+            self.socketio.emit("action", messages, namespace="/")
+            self.socketio.sleep(5 / 1000)
         return True
 
     def processEvent(self, event, session):
