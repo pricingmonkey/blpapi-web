@@ -1,4 +1,4 @@
-import os
+import os, sys
 import psutil
 import subprocess
 import traceback
@@ -57,6 +57,9 @@ def sendAndWait(session, request):
 global BBCOMM_LAST_RESTARTED_AT
 BBCOMM_LAST_RESTARTED_AT = None
 def restartBbcomm():
+    if not sys.platform == "win32":
+        return
+
     global BBCOMM_LAST_RESTARTED_AT
     # debounce restarting for a few seconds, to allow bbcomm to fully initialise
     if BBCOMM_LAST_RESTARTED_AT and (datetime.datetime.now() - BBCOMM_LAST_RESTARTED_AT).total_seconds() < 10:
@@ -69,6 +72,9 @@ def restartBbcomm():
         traceback.print_exc()
 
 def startBbcomm():
+    if not sys.platform == "win32":
+        return
+
     CREATE_NEW_CONSOLE = 0x00000010
 
     try:
@@ -90,6 +96,9 @@ def startBbcomm():
             pass
 
 def startBbcommIfNecessary():
+    if not sys.platform == "win32":
+        return
+
     try:
         bbcomm = next((proc for proc in psutil.process_iter() if proc.name() == "bbcomm.exe"), None)
 

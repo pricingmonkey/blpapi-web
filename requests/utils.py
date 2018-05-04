@@ -4,14 +4,10 @@ import hashlib, traceback
 
 def allowCORS(host):
     HOSTS = [
-        "https://staging.pricingmonkey.com",
-        "http://staging.pricingmonkey.com",
-        "https://pricingmonkey.com",
-        "http://pricingmonkey.com",
         "http://localhost:8080",
         "http://localhost:8081"
     ]
-    if host in HOSTS:
+    if host.endswith("pricingmonkey.com") or host in HOSTS: 
         return host
     else:
         return "null"
