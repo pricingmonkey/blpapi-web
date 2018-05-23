@@ -13,6 +13,7 @@ import traceback
 import sys
 import subprocess
 import psutil
+import functools as fn
 
 from flask import Flask, Response, request
 from flask_socketio import emit, SocketIO
@@ -29,6 +30,7 @@ app = Flask(__name__)
 app.url_map.strict_slashes = False
 
 app.allSubscriptions = {}
+app.bloombergHits = {}
 app.sessionForRequests = None
 app.sessionForSubscriptions = None
 
@@ -56,7 +58,14 @@ def tellThemWhenCORSIsAllowed():
 def status():
     status = "UP" if app.sessionForRequests or app.sessionForSubscriptions else "DOWN"
     response = Response(
-        json.dumps({ "status": status, "version": VERSION}).encode(),
+        json.dumps({
+            "status": status,
+            "version": VERSION,
+            "metrics": {
+                "subscriptions": fn.reduce(lambda xs, x: xs + 1 + len(x[1]), app.allSubscriptions.items(), 0),
+                "bloombergHits": app.bloombergHits
+            }
+        }).encode(),
         status=200,
         mimetype='application/json')
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))

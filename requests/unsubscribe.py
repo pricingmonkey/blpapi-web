@@ -5,7 +5,7 @@ from flask import Blueprint, current_app as app, request, Response
 from bloomberg.utils import openBloombergSession, openBloombergService
 from utils import handleBrokenSession
 
-from .utils import allowCORS, respond400, respond500
+from .utils import allowCORS, respond400, respond500, recordBloombergHits
 
 blueprint = Blueprint('unsubscribe', __name__)
 
@@ -28,6 +28,7 @@ def doUnsubscribe(securities):
                 del app.allSubscriptions[security]
             subscriptionList.add(security, correlationId=correlationId)
 
+        recordBloombergHits("subscribe", subscriptionList.size())
         app.sessionForSubscriptions.unsubscribe(subscriptionList)
     except Exception as e:
         handleBrokenSession(app, e)

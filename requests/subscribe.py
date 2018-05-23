@@ -5,7 +5,7 @@ from flask import Blueprint, current_app as app, request, Response
 from bloomberg.utils import openBloombergSession, openBloombergService
 from utils import handleBrokenSession
 
-from .utils import allowCORS, respond400, respond500
+from .utils import allowCORS, respond400, respond500, recordBloombergHits
 
 blueprint = Blueprint('subscribe', __name__)
 
@@ -45,10 +45,12 @@ def index():
             if not security in app.allSubscriptions:
                 app.allSubscriptions[security] = list(fields)
                 subscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
+                recordBloombergHits("subscribe", len(fields))
             else:
                 app.allSubscriptions[security] += fields
                 app.allSubscriptions[security] = list(set(app.allSubscriptions[security]))
                 resubscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
+                recordBloombergHits("resubscribe", len(fields))
 
         if subscriptionList.size() != 0:
             app.sessionForSubscriptions.subscribe(subscriptionList)
@@ -58,7 +60,9 @@ def index():
                 app.sessionForSubscriptions.resubscribe(resubscriptionList)
             except Exception as e:
                 traceback.print_exc()
+                recordBloombergHits("unsubscribe", resubscriptionList.size() * 3)
                 app.sessionForSubscriptions.unsubscribe(resubscriptionList)
+                recordBloombergHits("subscribe", resubscriptionList.size() * 3)
                 app.sessionForSubscriptions.subscribe(resubscriptionList)
     except Exception as e:
         handleBrokenSession(app, e)

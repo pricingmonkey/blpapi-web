@@ -7,11 +7,12 @@ from bloomberg.utils import openBloombergSession, openBloombergService, sendAndW
 from bloomberg.extract import extractIntradaySecurityPricing, extractErrors
 from utils import handleBrokenSession
 
-from .utils import allowCORS, generateEtag, respond400, respond500
+from .utils import allowCORS, generateEtag, respond400, respond500, recordBloombergHits
 
 blueprint = Blueprint('intraday', __name__)
 
 def requestIntraday(session, securities, eventTypes, startDateTime, endDateTime):
+    recordBloombergHits("intraday", len(securities) * len(eventTypes))
     try:
         refDataService, _ = openBloombergService(session, "//blp/refdata")
         securityPricing = []

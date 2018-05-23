@@ -6,11 +6,12 @@ from bloomberg.utils import openBloombergSession, openBloombergService, sendAndW
 from bloomberg.extract import extractReferenceSecurityPricing, extractErrors
 from utils import handleBrokenSession
 
-from .utils import allowCORS, respond400, respond500
+from .utils import allowCORS, respond400, respond500, recordBloombergHits
 
 blueprint = Blueprint('latest', __name__)
 
 def requestLatest(session, securities, fields):
+    recordBloombergHits("latest", len(securities) * len(fields))
     try:
         refDataService, _ = openBloombergService(session, "//blp/refdata")
         request = refDataService.createRequest("ReferenceDataRequest")

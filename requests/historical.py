@@ -6,11 +6,12 @@ from bloomberg.utils import openBloombergSession, openBloombergService, sendAndW
 from bloomberg.extract import extractHistoricalSecurityPricing, extractErrors
 from utils import handleBrokenSession
 
-from .utils import allowCORS, generateEtag, respond400, respond500
+from .utils import allowCORS, generateEtag, respond400, respond500, recordBloombergHits
 
 blueprint = Blueprint('historical', __name__)
 
 def requestHistorical(session, securities, fields, startDate, endDate):
+    recordBloombergHits("historical", len(securities) * len(fields))
     try:
         refDataService, _ = openBloombergService(session, "//blp/refdata")
         request = refDataService.createRequest("HistoricalDataRequest")

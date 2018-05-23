@@ -1,8 +1,12 @@
-from flask import request, Response
+import datetime
+from flask import request, Response, current_app as app
 
 import hashlib, traceback
 
+
 def allowCORS(host):
+    if not host:
+        return ""
     HOSTS = [
         "http://localhost:8080",
         "http://localhost:8081"
@@ -29,3 +33,17 @@ def respond500(e):
     traceback.print_exc()
     return response
 
+def recordBloombergHits(key, number):
+    today = datetime.date.today().isoformat()
+    if not today in app.bloombergHits:
+        app.bloombergHits[today] = {
+            "latest": 0,
+            "historical": 0,
+            "intraday": 0,
+            "subscribe": 0,
+            "resubscribe": 0,
+            "unsubscribe": 0
+        }
+    if not key in app.bloombergHits[today]:
+        app.bloombergHits[today][key] = 0
+    app.bloombergHits[today][key] += number
