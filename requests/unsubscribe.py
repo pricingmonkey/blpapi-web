@@ -28,7 +28,7 @@ def doUnsubscribe(securities):
                 del app.allSubscriptions[security]
             subscriptionList.add(security, correlationId=correlationId)
 
-        recordBloombergHits("subscribe", subscriptionList.size())
+        recordBloombergHits("unsubscribe", subscriptionList.size())
         app.sessionForSubscriptions.unsubscribe(subscriptionList)
     except Exception as e:
         handleBrokenSession(app, e)

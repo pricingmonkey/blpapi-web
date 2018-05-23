@@ -62,7 +62,7 @@ def status():
             "status": status,
             "version": VERSION,
             "metrics": {
-                "subscriptions": fn.reduce(lambda xs, x: xs + 1 + len(x[1]), app.allSubscriptions.items(), 0),
+                "subscriptions": fn.reduce(lambda xs, x: xs + len(x[1]), app.allSubscriptions.items(), 0),
                 "bloombergHits": app.bloombergHits
             }
         }).encode(),
