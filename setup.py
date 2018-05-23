@@ -11,6 +11,7 @@ import sys
 
 if sys.platform == 'win32':
     import py2exe
+    from distutils.core import setup
 
     class Target:
         def __init__(self, **kw):
