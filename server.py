@@ -13,7 +13,7 @@ import functools as fn
 from flask import Flask, Response, request
 from flask_socketio import SocketIO
 
-from bloomberg.session import openBloombergSession, stopBloombergSession
+from bloomberg.session import Session
 from bloomberg.bbcomm import startBbcommIfNecessary
 from routes import latest, historical, intraday, subscribe, unsubscribe, dev
 from routes.utils import allowCORS
@@ -27,8 +27,8 @@ app.url_map.strict_slashes = False
 
 app.allSubscriptions = {}
 app.bloombergHits = {}
-app.sessionForRequests = None
-app.sessionForSubscriptions = None
+app.sessionForRequests = Session()
+app.sessionForSubscriptions = Session()
 
 app.register_blueprint(latest.blueprint, url_prefix='/latest')
 app.register_blueprint(historical.blueprint, url_prefix='/historical')
@@ -107,8 +107,8 @@ def main(port = 6659):
     server = None
     try:
         try:
-            app.sessionForRequests = openBloombergSession()
-            app.sessionForSubscriptions = openBloombergSession()
+            app.sessionForRequests.open()
+            app.sessionForSubscriptions.open()
             app.allSubscriptions = {}
         except:
             traceback.print_exc()
@@ -117,10 +117,8 @@ def main(port = 6659):
     except KeyboardInterrupt:
         print("Ctrl+C received, exiting...")
     finally:
-        if app.sessionForRequests is not None:
-            stopBloombergSession(app.sessionForRequests)
-        if app.sessionForSubscriptions is not None:
-            stopBloombergSession(app.sessionForSubscriptions)
+        app.sessionForRequests.stop()
+        app.sessionForSubscriptions.stop()
         if server is not None:
             server.socket.close()
 

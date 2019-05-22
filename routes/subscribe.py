@@ -2,7 +2,6 @@ import json, sys
 import traceback
 from flask import Blueprint, current_app as app, request, Response
 
-from bloomberg.session import openBloombergSession, openBloombergService
 from utils import handleBrokenSession
 
 from .utils import allowCORS, respond400, respond500, recordBloombergHits
@@ -19,8 +18,8 @@ def tellThemWhenCORSIsAllowed():
 @blueprint.route('/', methods = ['GET', 'POST'])
 def index():
     try:
-        if app.sessionForSubscriptions is None:
-            app.sessionForSubscriptions = openBloombergSession()
+        if not app.sessionForSubscriptions.isOpen():
+            app.sessionForSubscriptions.open()
             app.allSubscriptions = {}
     except Exception as e:
         handleBrokenSession(app, e)
@@ -35,7 +34,7 @@ def index():
         return respond400(e)
 
     try:
-        _, sessionRestarted = openBloombergService(app.sessionForSubscriptions, "//blp/mktdata")
+        _, sessionRestarted = app.sessionForSubscriptions.openService("//blp/mktdata")
         if sessionRestarted:
             app.allSubscriptions = {}
         subscriptionList = blpapi.SubscriptionList()

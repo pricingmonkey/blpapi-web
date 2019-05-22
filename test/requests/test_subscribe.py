@@ -9,7 +9,7 @@ def app():
     wireUpBlpapiImplementation(eventlet.import_patched("blpapi_simulator"))
     my_app.register_blueprint(dev.blueprint, url_prefix='/dev')
     app = my_app.test_client()
-    app.testing = True 
+    app.testing = True
     return app
 
 def test_subscribe():

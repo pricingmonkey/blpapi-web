@@ -3,7 +3,6 @@ import json
 import traceback
 from flask import Blueprint, current_app as app, request, Response
 
-from bloomberg.session import openBloombergSession, openBloombergService, sendAndWait
 from bloomberg.results.errors import extractErrors
 from bloomberg.results.intraday import extractIntradaySecurityPricing
 from utils import handleBrokenSession
@@ -15,7 +14,7 @@ blueprint = Blueprint('intraday', __name__)
 def requestIntraday(session, securities, eventTypes, startDateTime, endDateTime):
     recordBloombergHits("intraday", len(securities) * len(eventTypes))
     try:
-        refDataService, _ = openBloombergService(session, "//blp/refdata")
+        refDataService, _ = session.openService("//blp/refdata")
         securityPricing = []
         errors = []
         for security in securities:
@@ -28,7 +27,7 @@ def requestIntraday(session, securities, eventTypes, startDateTime, endDateTime)
                 request.set("eventType", eventType)
                 request.set("interval", 5)
 
-                responses = sendAndWait(session, request)
+                responses = session.sendAndWait(request)
 
                 for response in responses:
                     securityPricing.append(extractIntradaySecurityPricing(security, response))
@@ -45,8 +44,7 @@ def requestIntraday(session, securities, eventTypes, startDateTime, endDateTime)
 @blueprint.route('/', methods = ['GET'])
 def index():
     try:
-        if app.sessionForRequests is None:
-            app.sessionForRequests = openBloombergSession()
+        app.sessionForRequests.open()
     except Exception as e:
         handleBrokenSession(app, e)
         traceback.print_exc()

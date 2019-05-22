@@ -2,7 +2,6 @@ import eventlet
 import traceback
 import time
 
-from bloomberg.session import openBloombergSession
 from utils import handleBrokenSession
 
 def extractFieldValues(message):
@@ -68,8 +67,8 @@ def handleSubscriptions(app, socketio):
     eventHandler = SubscriptionEventHandler(app, socketio)
     while True:
         try:
-            if app.sessionForSubscriptions is None:
-                app.sessionForSubscriptions = openBloombergSession()
+            if app.sessionForSubscriptions.isOpen():
+                app.sessionForSubscriptions.open()
                 app.allSubscriptions = {}
 
             event = app.sessionForSubscriptions.nextEvent(500)

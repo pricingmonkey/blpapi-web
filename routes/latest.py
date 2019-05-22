@@ -2,7 +2,6 @@ import json
 import traceback
 from flask import Blueprint, current_app as app, request, Response
 
-from bloomberg.session import openBloombergSession, openBloombergService, sendAndWait
 from bloomberg.results.latest import extractReferenceSecurityPricing
 from bloomberg.results.errors import extractErrors
 from utils import handleBrokenSession
@@ -14,7 +13,7 @@ blueprint = Blueprint('latest', __name__)
 def requestLatest(session, securities, fields):
     recordBloombergHits("latest", len(securities) * len(fields))
     try:
-        refDataService, _ = openBloombergService(session, "//blp/refdata")
+        refDataService, _ = session.openService("//blp/refdata")
         request = refDataService.createRequest("ReferenceDataRequest")
 
         request.set("returnFormattedValue", True)
@@ -24,7 +23,7 @@ def requestLatest(session, securities, fields):
         for field in fields:
             request.append("fields", field)
 
-        responses = sendAndWait(session, request)
+        responses = session.sendAndWait(request)
 
         securityPricing = []
         for response in responses:
@@ -48,8 +47,7 @@ def tellThemWhenCORSIsAllowed():
 @blueprint.route('/', methods = ['GET', 'POST'])
 def index():
     try:
-        if app.sessionForRequests is None:
-            app.sessionForRequests = openBloombergSession()
+        app.sessionForRequests.open()
     except Exception as e:
         handleBrokenSession(app, e)
         traceback.print_exc()
