@@ -7,12 +7,8 @@ import encodings.idna
 import logging
 import argparse
 
-import time
 import json
 import traceback
-import sys
-import subprocess
-import psutil
 import functools as fn
 
 from flask import Flask, Response, request
@@ -80,6 +76,7 @@ def subscriptions():
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
     return response
 
+
 def wireUpBlpapiImplementation(blpapi):
     import bloomberg.utils
     bloomberg.utils.__dict__["blpapi"] = blpapi
@@ -89,10 +86,12 @@ def wireUpBlpapiImplementation(blpapi):
     unsubscribe.__dict__["blpapi"] = blpapi
     dev.__dict__["blpapi"] = blpapi
 
+
 def wireUpDevelopmentDependencies():
     global blpapi
     blpapi = eventlet.import_patched("blpapi_simulator")
     app.register_blueprint(dev.blueprint, url_prefix='/dev')
+
 
 def wireUpProductionDependencies():
     global blpapi
@@ -101,6 +100,7 @@ def wireUpProductionDependencies():
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.WARNING)
     startBbcommIfNecessary()
+
 
 def main(port = 6659):
     wireUpBlpapiImplementation(blpapi)
@@ -114,7 +114,7 @@ def main(port = 6659):
         except:
             traceback.print_exc()
         socketio.start_background_task(lambda: handleSubscriptions(app, socketio))
-        socketio.run(app, port = port)
+        socketio.run(app, port=port)
     except KeyboardInterrupt:
         print("Ctrl+C received, exiting...")
     finally:
@@ -125,11 +125,12 @@ def main(port = 6659):
         if server is not None:
             server.socket.close()
 
+
 if main_is_frozen():
     wireUpProductionDependencies()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser()
     parser.add_argument('--simulator', action='store_true',
                         help='simulate Bloomberg API (instead of using real connection)')
     parser.add_argument('--log', choices=['critical', 'error', 'warn', 'info', 'debug'],

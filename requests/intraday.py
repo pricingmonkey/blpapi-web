@@ -46,9 +46,6 @@ def index():
     try:
         if app.sessionForRequests is None:
             app.sessionForRequests = openBloombergSession()
-        if app.sessionForSubscriptions is None:
-            app.sessionForSubscriptions = openBloombergSession()
-            app.allSubscriptions = {}
     except Exception as e:
         handleBrokenSession(app, e)
         traceback.print_exc()
