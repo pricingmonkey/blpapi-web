@@ -1,6 +1,8 @@
 import sys, imp, os
 
-from bloomberg.utils import BrokenSessionException, restartBbcomm
+from bloomberg.session import BrokenSessionException
+from bloomberg.bbcomm import restartBbcomm
+
 
 def main_is_frozen():
     return (hasattr(sys, "frozen") or # new py2exe

@@ -1,8 +1,7 @@
-import os, sys
+import sys
 import psutil
 import subprocess
 import traceback
-import datetime
 
 BLOOMBERG_HOST = "localhost"
 BLOOMBERG_PORT = 8194
@@ -54,55 +53,3 @@ def sendAndWait(session, request):
             break
     return responses
 
-global BBCOMM_LAST_RESTARTED_AT
-BBCOMM_LAST_RESTARTED_AT = None
-def restartBbcomm():
-    if not sys.platform == "win32":
-        return
-
-    global BBCOMM_LAST_RESTARTED_AT
-    # debounce restarting for a few seconds, to allow bbcomm to fully initialise
-    if BBCOMM_LAST_RESTARTED_AT and (datetime.datetime.now() - BBCOMM_LAST_RESTARTED_AT).total_seconds() < 10:
-        return
-    BBCOMM_LAST_RESTARTED_AT = datetime.datetime.now()
-    try:
-        os.system("taskkill /im bbcomm.exe /f")
-        startBbcomm()
-    except Exception:
-        traceback.print_exc()
-
-def startBbcomm():
-    if not sys.platform == "win32":
-        return
-
-    CREATE_NEW_CONSOLE = 0x00000010
-
-    try:
-        info = subprocess.STARTUPINFO()
-        info.dwFlags = 1
-        info.wShowWindow = 0
-        subprocess.Popen(["c:/blp/api/bbcomm.exe"],
-                        creationflags=CREATE_NEW_CONSOLE,
-                        startupinfo=info)
-    except FileNotFoundError:
-        try:
-            info = subprocess.STARTUPINFO()
-            info.dwFlags = 1
-            info.wShowWindow = 0
-            subprocess.Popen(["c:/blp/dapi/bbcomm.exe"],
-                            creationflags=CREATE_NEW_CONSOLE,
-                            startupinfo=info)
-        except FileNotFoundError:
-            pass
-
-def startBbcommIfNecessary():
-    if not sys.platform == "win32":
-        return
-
-    try:
-        bbcomm = next((proc for proc in psutil.process_iter() if proc.name() == "bbcomm.exe"), None)
-
-        if not bbcomm:
-            startBbcomm()
-    except Exception:
-        traceback.print_exc()

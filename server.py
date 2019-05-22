@@ -14,7 +14,8 @@ import functools as fn
 from flask import Flask, Response, request
 from flask_socketio import emit, SocketIO
 
-from bloomberg.utils import openBloombergSession, startBbcommIfNecessary, BrokenSessionException
+from bloomberg.session import openBloombergSession
+from bloomberg.bbcomm import startBbcommIfNecessary
 from requests import latest, historical, intraday, subscribe, unsubscribe, dev
 from requests.utils import allowCORS
 from subscriptions import handleSubscriptions
@@ -78,8 +79,8 @@ def subscriptions():
 
 
 def wireUpBlpapiImplementation(blpapi):
-    import bloomberg.utils
-    bloomberg.utils.__dict__["blpapi"] = blpapi
+    import bloomberg.session
+    bloomberg.session.__dict__["blpapi"] = blpapi
     subscribe.__dict__["blpapi"] = blpapi
     import subscriptions
     subscriptions.__dict__["blpapi"] = blpapi

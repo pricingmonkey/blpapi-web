@@ -2,7 +2,7 @@ import json
 import traceback
 from flask import Blueprint, current_app as app, request, Response
 
-from bloomberg.utils import openBloombergSession, openBloombergService, sendAndWait
+from bloomberg.session import openBloombergSession, openBloombergService, sendAndWait
 from bloomberg.extract import extractHistoricalSecurityPricing, extractErrors
 from utils import handleBrokenSession
 

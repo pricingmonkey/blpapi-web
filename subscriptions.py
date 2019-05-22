@@ -2,7 +2,7 @@ import eventlet
 import traceback
 import time
 
-from bloomberg.utils import openBloombergSession
+from bloomberg.session import openBloombergSession
 from utils import handleBrokenSession
 
 def extractFieldValues(message):
