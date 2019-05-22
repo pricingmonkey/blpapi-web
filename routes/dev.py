@@ -15,7 +15,7 @@ class BrokenSession:
 
 @blueprint.route('/requests/session/reset', methods = ['GET'])
 def resetSessionForRequests():
-    app.sessionForRequests.reset()
+    app.sessionPoolForRequests.reset()
     return Response("OK", status=200)
 
 @blueprint.route('/subscriptions/session/reset', methods = ['GET'])
@@ -28,7 +28,7 @@ OriginalSession = [None]
 def stopSessionForSubscriptions():
     OriginalSession[0] = blpapi.Session
     blpapi.Session = BrokenSession
-    app.sessionForRequests.reset()
+    app.sessionPoolForRequests.reset()
     app.sessionForSubscriptions.reset()
     return Response("OK", status=200)
 
@@ -36,7 +36,7 @@ def stopSessionForSubscriptions():
 def startSessionForRequests():
     if OriginalSession[0]:
         blpapi.Session = OriginalSession[0]
-        app.sessionForRequests.reset()
+        app.sessionPoolForRequests.reset()
         app.sessionForSubscriptions.reset()
     return Response("OK", status=200)
 
@@ -52,7 +52,10 @@ def functionOneTimeBroken(original):
 
 @blueprint.route('/requests/sendRequest/break', methods = ['GET'])
 def breakSendRequestForRequests():
-    app.sessionForRequests.sessionImpl.sendRequest = functionOneTimeBroken(app.sessionForRequests.sessionImpl.sendRequest)
+    sessionPool = app.sessionPoolForRequests
+    session = sessionPool.sessions[sessionPool.currentIndex]
+    session.open()
+    session.sessionImpl.sendRequest = functionOneTimeBroken(session.sessionImpl.sendRequest)
 
     return Response("OK", status=200)
 
@@ -64,7 +67,10 @@ def breakNextEventForSubscriptions():
 
 @blueprint.route('/requests/getService/break', methods = ['GET'])
 def breakGetServiceForRequests():
-    app.sessionForRequests.sessionImpl.getService = functionOneTimeBroken(app.sessionForRequests.sessionImpl.getService)
+    sessionPool = app.sessionPoolForRequests
+    session = sessionPool.sessions[sessionPool.currentIndex]
+    session.open()
+    session.sessionImpl.getService = functionOneTimeBroken(session.sessionImpl.getService)
 
     return Response("OK", status=200)
 

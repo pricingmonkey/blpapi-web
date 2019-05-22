@@ -50,8 +50,9 @@ def tellThemWhenCORSIsAllowed():
 # ?security=...&security=...&field=...&field=...&startDate=...&endDate=...
 @blueprint.route('/', methods = ['GET', 'POST'])
 def index():
+    session = app.sessionPoolForRequests.getSession()
     try:
-        app.sessionForRequests.open()
+        session.open()
     except Exception as e:
         handleBrokenSession(app, e)
         traceback.print_exc()
@@ -79,7 +80,7 @@ def index():
         response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
         return response
     try:
-        payload = json.dumps(requestHistorical(app.sessionForRequests, securities, fields, startDate, endDate)).encode()
+        payload = json.dumps(requestHistorical(session, securities, fields, startDate, endDate)).encode()
     except Exception as e:
         handleBrokenSession(app, e)
         traceback.print_exc()
