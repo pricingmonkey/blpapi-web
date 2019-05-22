@@ -1,4 +1,5 @@
-from bloomberg.extract import extractReferenceSecurityPricing, extractErrors
+from bloomberg.results.latest import extractReferenceSecurityPricing
+from bloomberg.results.errors import extractErrors
 from blpapi_simulator.simulator.message import Message, Map, List
 
 def test_simple():

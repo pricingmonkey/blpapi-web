@@ -2,7 +2,7 @@ import eventlet
 import pytest
 
 from server import app as my_app, wireUpBlpapiImplementation
-from requests import dev
+from routes import dev
 
 @pytest.fixture(scope="session")
 def app():

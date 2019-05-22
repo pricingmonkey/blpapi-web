@@ -3,7 +3,8 @@ import traceback
 from flask import Blueprint, current_app as app, request, Response
 
 from bloomberg.session import openBloombergSession, openBloombergService, sendAndWait
-from bloomberg.extract import extractHistoricalSecurityPricing, extractErrors
+from bloomberg.results.errors import extractErrors
+from bloomberg.results.historical import extractHistoricalSecurityPricing
 from utils import handleBrokenSession
 
 from .utils import allowCORS, generateEtag, respond400, respond500, recordBloombergHits

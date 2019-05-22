@@ -22,6 +22,10 @@ def openBloombergSession():
 
     return session
 
+
+def stopBloombergSession(session):
+    session.stop()
+
 def openBloombergService(session, serviceName):
     try:
         sessionRestarted = False

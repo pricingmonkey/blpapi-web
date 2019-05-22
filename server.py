@@ -3,7 +3,6 @@ import eventlet
 # "import encodings.idna" is a fix for "unknown encoding: idna" error
 # which we saw occurring's on a user's computer and crashing the app
 # in result
-import encodings.idna
 import logging
 import argparse
 
@@ -12,14 +11,14 @@ import traceback
 import functools as fn
 
 from flask import Flask, Response, request
-from flask_socketio import emit, SocketIO
+from flask_socketio import SocketIO
 
-from bloomberg.session import openBloombergSession
+from bloomberg.session import openBloombergSession, stopBloombergSession
 from bloomberg.bbcomm import startBbcommIfNecessary
-from requests import latest, historical, intraday, subscribe, unsubscribe, dev
-from requests.utils import allowCORS
-from subscriptions import handleSubscriptions
-from utils import get_main_dir, main_is_frozen
+from routes import latest, historical, intraday, subscribe, unsubscribe, dev
+from routes.utils import allowCORS
+from bloomberg.subscriptions import handleSubscriptions
+from utils import main_is_frozen
 
 VERSION = "2.6"
 app = Flask(__name__)
@@ -82,7 +81,7 @@ def wireUpBlpapiImplementation(blpapi):
     import bloomberg.session
     bloomberg.session.__dict__["blpapi"] = blpapi
     subscribe.__dict__["blpapi"] = blpapi
-    import subscriptions
+    from bloomberg import subscriptions
     subscriptions.__dict__["blpapi"] = blpapi
     unsubscribe.__dict__["blpapi"] = blpapi
     dev.__dict__["blpapi"] = blpapi
@@ -96,7 +95,6 @@ def wireUpDevelopmentDependencies():
 
 def wireUpProductionDependencies():
     global blpapi
-    import blpapi
 
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.WARNING)
@@ -120,9 +118,9 @@ def main(port = 6659):
         print("Ctrl+C received, exiting...")
     finally:
         if app.sessionForRequests is not None:
-            app.sessionForRequests.stop()
+            stopBloombergSession(app.sessionForRequests)
         if app.sessionForSubscriptions is not None:
-            app.sessionForSubscriptions.stop()
+            stopBloombergSession(app.sessionForSubscriptions)
         if server is not None:
             server.socket.close()
 

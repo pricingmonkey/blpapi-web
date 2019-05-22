@@ -4,10 +4,11 @@ import traceback
 from flask import Blueprint, current_app as app, request, Response
 
 from bloomberg.session import openBloombergSession, openBloombergService, sendAndWait
-from bloomberg.extract import extractIntradaySecurityPricing, extractErrors
+from bloomberg.results.errors import extractErrors
+from bloomberg.results.intraday import extractIntradaySecurityPricing
 from utils import handleBrokenSession
 
-from .utils import allowCORS, generateEtag, respond400, respond500, recordBloombergHits
+from .utils import allowCORS, respond400, respond500, recordBloombergHits
 
 blueprint = Blueprint('intraday', __name__)
 

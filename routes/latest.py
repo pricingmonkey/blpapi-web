@@ -3,7 +3,8 @@ import traceback
 from flask import Blueprint, current_app as app, request, Response
 
 from bloomberg.session import openBloombergSession, openBloombergService, sendAndWait
-from bloomberg.extract import extractReferenceSecurityPricing, extractErrors
+from bloomberg.results.latest import extractReferenceSecurityPricing
+from bloomberg.results.errors import extractErrors
 from utils import handleBrokenSession
 
 from .utils import allowCORS, respond400, respond500, recordBloombergHits
@@ -73,5 +74,3 @@ def index():
         mimetype='application/json')
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
     return response
-
-

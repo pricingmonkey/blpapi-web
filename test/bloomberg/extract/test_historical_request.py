@@ -1,6 +1,7 @@
 import datetime
 
-from bloomberg.extract import extractHistoricalSecurityPricing, extractErrors
+from bloomberg.results.errors import extractErrors
+from bloomberg.results.historical import extractHistoricalSecurityPricing
 from blpapi_simulator.simulator.message import Message, Map, List
 
 def test_simple():
