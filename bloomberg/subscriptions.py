@@ -67,7 +67,7 @@ def handleSubscriptions(app, socketio):
     eventHandler = SubscriptionEventHandler(app, socketio)
     while True:
         try:
-            if app.sessionForSubscriptions.isOpen():
+            if not app.sessionForSubscriptions.isOpen():
                 app.sessionForSubscriptions.open()
                 app.allSubscriptions = {}
 
