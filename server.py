@@ -15,7 +15,6 @@ from flask_socketio import SocketIO
 
 from bloomberg.session import Session
 from bloomberg.bbcomm import startBbcommIfNecessary
-from bloomberg.sessionPool import SessionPool
 from routes import latest, historical, intraday, subscribe, unsubscribe, dev
 from routes.utils import allowCORS
 from bloomberg.subscriptions import handleSubscriptions
@@ -28,7 +27,7 @@ app.url_map.strict_slashes = False
 
 app.allSubscriptions = {}
 app.bloombergHits = {}
-app.sessionPoolForRequests = SessionPool(5)
+app.sessionForRequests = Session()
 app.sessionForSubscriptions = Session()
 
 app.register_blueprint(latest.blueprint, url_prefix='/latest')
@@ -53,7 +52,7 @@ def tellThemWhenCORSIsAllowed():
 
 @app.route('/status', methods = ['GET'])
 def status():
-    status = "UP" if app.sessionPoolForRequests.isHealthy() or app.sessionForSubscriptions else "DOWN"
+    status = "UP" if app.sessionForRequests or app.sessionForSubscriptions else "DOWN"
     response = Response(
         json.dumps({
             "status": status,
@@ -108,7 +107,7 @@ def main(port = 6659):
     server = None
     try:
         try:
-            app.sessionPoolForRequests.open()
+            app.sessionForRequests.open()
             app.sessionForSubscriptions.open()
             app.allSubscriptions = {}
         except:
@@ -118,7 +117,7 @@ def main(port = 6659):
     except KeyboardInterrupt:
         print("Ctrl+C received, exiting...")
     finally:
-        app.sessionPoolForRequests.stop()
+        app.sessionForRequests.stop()
         app.sessionForSubscriptions.stop()
         if server is not None:
             server.socket.close()

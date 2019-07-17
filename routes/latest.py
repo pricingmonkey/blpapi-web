@@ -47,7 +47,7 @@ def tellThemWhenCORSIsAllowed():
 @blueprint.route('/', methods = ['GET', 'POST'])
 def index():
     try:
-        session = app.sessionPoolForRequests.getSession()
+        app.sessionForRequests.open()
     except Exception as e:
         handleBrokenSession(app, e)
         traceback.print_exc()
@@ -60,7 +60,7 @@ def index():
         return respond400(e)
 
     try:
-        payload = json.dumps(requestLatest(session, securities, fields)).encode()
+        payload = json.dumps(requestLatest(app.sessionForRequests, securities, fields)).encode()
     except Exception as e:
         handleBrokenSession(app, e)
         traceback.print_exc()
