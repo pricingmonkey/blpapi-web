@@ -1,7 +1,7 @@
 import datetime
 from flask import request, Response, current_app as app
 
-import hashlib, traceback
+import traceback
 
 
 def allowCORS(host):
@@ -15,11 +15,6 @@ def allowCORS(host):
         return host
     else:
         return "null"
-
-def generateEtag(obj):
-    sha1 = hashlib.sha1()
-    sha1.update("{}".format(obj).encode())
-    return '"{}"'.format(sha1.hexdigest())
 
 def respond400(e):
     response = Response("{0}: {1}".format(type(e).__name__, e).encode(), status=400)

@@ -6,7 +6,7 @@ from bloomberg.results.errors import extractErrors
 from bloomberg.results.historical import extractHistoricalSecurityPricing
 from utils import handleBrokenSession
 
-from .utils import allowCORS, generateEtag, respond400, respond500, recordBloombergHits
+from .utils import allowCORS, respond400, respond500, recordBloombergHits
 
 blueprint = Blueprint('historical', __name__)
 
@@ -70,19 +70,6 @@ def index():
         traceback.print_exc()
         return respond400(e)
 
-    etag = generateEtag({
-        "securities": securities,
-        "fields": fields,
-        "startDate": startDate,
-        "endDate": endDate
-    })
-    if request.headers.get('If-None-Match') == etag:
-        response = Response(
-            "",
-            status=304,
-            mimetype='application/json')
-        response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
-        return response
     try:
         payload = json.dumps(requestHistorical(session, securities, fields, startDate, endDate)).encode()
     except Exception as e:
@@ -94,9 +81,6 @@ def index():
         payload,
         status=200,
         mimetype='application/json')
-    response.headers['Etag'] = etag
-    response.headers['Cache-Control'] = "max-age=86400, must-revalidate"
-    response.headers['Vary'] = "Origin"
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
     return response
 
