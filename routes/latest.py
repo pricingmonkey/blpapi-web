@@ -13,7 +13,7 @@ blueprint = Blueprint('latest', __name__)
 def requestLatest(session, securities, fields):
     recordBloombergHits("latest", len(securities) * len(fields))
     try:
-        refDataService, _ = session.openService("//blp/refdata")
+        refDataService, _ = session.getService("//blp/refdata")
         request = refDataService.createRequest("ReferenceDataRequest")
 
         request.set("returnFormattedValue", True)

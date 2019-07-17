@@ -110,7 +110,7 @@ def main(port = 6659):
     try:
         try:
             app.sessionPoolForRequests.open()
-            app.sessionForSubscriptions.open()
+            app.sessionForSubscriptions.start()
             app.allSubscriptions = {}
         except:
             traceback.print_exc()

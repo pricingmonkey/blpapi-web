@@ -18,8 +18,8 @@ def tellThemWhenCORSIsAllowed():
 @blueprint.route('/', methods = ['GET', 'POST'])
 def index():
     try:
-        if not app.sessionForSubscriptions.isOpen():
-            app.sessionForSubscriptions.open()
+        if not app.sessionForSubscriptions.isStarted():
+            app.sessionForSubscriptions.start()
             app.allSubscriptions = {}
     except Exception as e:
         handleBrokenSession(app, e)
@@ -34,7 +34,7 @@ def index():
         return respond400(e)
 
     try:
-        _, sessionRestarted = app.sessionForSubscriptions.openService("//blp/mktdata")
+        _, sessionRestarted = app.sessionForSubscriptions.getService("//blp/mktdata")
         if sessionRestarted:
             app.allSubscriptions = {}
         subscriptionList = blpapi.SubscriptionList()

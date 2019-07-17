@@ -54,7 +54,7 @@ def functionOneTimeBroken(original):
 def breakSendRequestForRequests():
     sessionPool = app.sessionPoolForRequests
     session = sessionPool.sessions[sessionPool.currentIndex]
-    session.open()
+    session.start()
     session.sessionImpl.sendRequest = functionOneTimeBroken(session.sessionImpl.sendRequest)
 
     return Response("OK", status=200)
@@ -69,7 +69,7 @@ def breakNextEventForSubscriptions():
 def breakGetServiceForRequests():
     sessionPool = app.sessionPoolForRequests
     session = sessionPool.sessions[sessionPool.currentIndex]
-    session.open()
+    session.start()
     session.sessionImpl.getService = functionOneTimeBroken(session.sessionImpl.getService)
 
     return Response("OK", status=200)

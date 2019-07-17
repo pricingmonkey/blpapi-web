@@ -14,7 +14,7 @@ blueprint = Blueprint('intraday', __name__)
 def requestIntraday(session, securities, eventTypes, startDateTime, endDateTime):
     recordBloombergHits("intraday", len(securities) * len(eventTypes))
     try:
-        refDataService, _ = session.openService("//blp/refdata")
+        refDataService, _ = session.getService("//blp/refdata")
         securityPricing = []
         errors = []
         for security in securities:

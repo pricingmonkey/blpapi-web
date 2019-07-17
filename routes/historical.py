@@ -13,7 +13,7 @@ blueprint = Blueprint('historical', __name__)
 def requestHistorical(session, securities, fields, startDate, endDate):
     recordBloombergHits("historical", len(securities) * len(fields))
     try:
-        refDataService, _ = session.openService("//blp/refdata")
+        refDataService, _ = session.getService("//blp/refdata")
         request = refDataService.createRequest("HistoricalDataRequest")
 
         request.set("startDate", startDate)
@@ -52,7 +52,7 @@ def tellThemWhenCORSIsAllowed():
 def index():
     session = app.sessionPoolForRequests.getSession()
     try:
-        session.open()
+        session.start()
     except Exception as e:
         handleBrokenSession(app, e)
         traceback.print_exc()

@@ -17,7 +17,7 @@ def tellThemWhenCORSIsAllowed():
 
 def doUnsubscribe(securities):
     try:
-        _, sessionRestarted = app.sessionForSubscriptions.openService("//blp/mktdata")
+        _, sessionRestarted = app.sessionForSubscriptions.getService("//blp/mktdata")
         if sessionRestarted:
             app.allSubscriptions = {}
         subscriptionList = blpapi.SubscriptionList()
@@ -44,8 +44,8 @@ def doUnsubscribe(securities):
 @blueprint.route('/', methods = ['DELETE'])
 def unsubscribeAll():
     try:
-        if not app.sessionForSubscriptions.isOpen():
-            app.sessionForSubscriptions.open()
+        if not app.sessionForSubscriptions.isStarted():
+            app.sessionForSubscriptions.start()
             app.allSubscriptions = {}
     except Exception as e:
         handleBrokenSession(app, e)
@@ -57,8 +57,8 @@ def unsubscribeAll():
 @blueprint.route('/', methods = ['GET', 'POST'])
 def unsubscribe():
     try:
-        if not app.sessionForSubscriptions.isOpen():
-            app.sessionForSubscriptions.open()
+        if not app.sessionForSubscriptions.isStarted():
+            app.sessionForSubscriptions.start()
             app.allSubscriptions = {}
     except Exception as e:
         handleBrokenSession(app, e)

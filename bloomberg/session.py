@@ -8,11 +8,11 @@ class Session:
     def __init__(self):
         self.sessionImpl = None
 
-    def isOpen(self):
+    def isStarted(self):
         return self.sessionImpl is not None
 
-    def open(self):
-        if self.isOpen():
+    def start(self):
+        if self.isStarted():
             return
 
         sessionOptions = blpapi.SessionOptions()
@@ -28,27 +28,27 @@ class Session:
         return
 
     def stop(self):
-        if self.isOpen():
+        if self.isStarted():
             self.sessionImpl.stop()
         self.reset()
 
     def reset(self):
         self.sessionImpl = None
 
-    def safeGetService(self, serviceName):
+    def _getOrOpenService(self, serviceName):
         try:
             return self.sessionImpl.getService(serviceName), True
         except Exception as e:
             opened = self.sessionImpl.openService(serviceName)
             return self.sessionImpl.getService(serviceName), opened
 
-    def openService(self, serviceName):
-        if not self.isOpen():
-            self.open()
+    def getService(self, serviceName):
+        if not self.isStarted():
+            self.start()
 
         try:
             sessionRestarted = False
-            service, opened = self.safeGetService(serviceName)
+            service, opened = self._getOrOpenService(serviceName)
             if not opened:
                 sessionRestarted = True
                 self.sessionImpl.stop()
@@ -61,8 +61,8 @@ class Session:
             raise BrokenSessionException("Failed to open {}".format(serviceName)) from e
 
     def sendAndWait(self, request):
-        if not self.isOpen():
-            self.open()
+        if not self.isStarted():
+            self.start()
 
         eventQueue=blpapi.EventQueue()
         self.sessionImpl.sendRequest(request, eventQueue=eventQueue)
