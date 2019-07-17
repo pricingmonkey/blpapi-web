@@ -44,7 +44,7 @@ def requestIntraday(session, securities, eventTypes, startDateTime, endDateTime)
 @blueprint.route('/', methods = ['GET'])
 def index():
     try:
-        app.sessionForRequests.open()
+        session = app.sessionPoolForRequests.getSession()
     except Exception as e:
         handleBrokenSession(app, e)
         traceback.print_exc()
@@ -59,7 +59,7 @@ def index():
         return respond400(e)
 
     try:
-        payload = json.dumps(requestIntraday(app.sessionForRequests, securities, eventTypes, startDateTime, endDateTime)).encode()
+        payload = json.dumps(requestIntraday(session, securities, eventTypes, startDateTime, endDateTime)).encode()
     except Exception as e:
         handleBrokenSession(app, e)
         traceback.print_exc()

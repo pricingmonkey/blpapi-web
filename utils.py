@@ -16,7 +16,7 @@ def get_main_dir():
 
 def handleBrokenSession(app, e):
     if isinstance(e, BrokenSessionException):
-        app.sessionForRequests.stop()
+        app.sessionPoolForRequests.stop()
         app.sessionForSubscriptions.stop()
         app.allSubscriptions = {}
         restartBbcomm()
