@@ -3,5 +3,4 @@ flask
 flask-socketio
 eventlet
 psutil
-jinja2<2.9
 python-dateutil
