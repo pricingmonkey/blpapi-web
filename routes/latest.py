@@ -43,21 +43,13 @@ def tellThemWhenCORSIsAllowed():
     response.headers['Access-Control-Allow-Methods'] = ", ".join(["GET", "POST", "OPTIONS"])
     return response
 
-# ?security=...&security=...&field=...&field=...
-@blueprint.route('/', methods = ['GET', 'POST'])
-def index():
+def handleRequest(securities, fields):
     try:
         session = app.sessionPoolForRequests.getSession()
     except Exception as e:
         handleBrokenSession(app, e)
         traceback.print_exc()
         return respond500(e)
-    try:
-        securities = request.values.getlist('security') or []
-        fields = request.values.getlist('field') or []
-    except Exception as e:
-        traceback.print_exc()
-        return respond400(e)
 
     try:
         payload = json.dumps(requestLatest(session, securities, fields)).encode()
@@ -72,3 +64,27 @@ def index():
         mimetype='application/json')
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
     return response
+
+def parseJsonRequest(jsonData):
+    securities = [each['security'] for each in jsonData]
+    unflattenedFields = [each['fields'] for each in jsonData]
+    duplicatedFields = [y for x in unflattenedFields for y in x]
+    fields = list(set(duplicatedFields))
+    return securities, fields
+
+# ?security=...&security=...&field=...&field=...
+@blueprint.route('/', methods = ['POST', 'GET'])
+def index():
+    try:
+        if request.headers['content-type'] == 'application/json':
+            jsonData = request.get_json()
+            securities, fields = parseJsonRequest(jsonData)
+        else:
+            securities = request.values.getlist('security') or []
+            fields = request.values.getlist('field') or []
+    except Exception as e:
+        traceback.print_exc()
+        return respond400(e)
+
+    return handleRequest(securities, fields)
+

@@ -66,7 +66,11 @@ def unsubscribe():
         return respond500(e)
 
     try:
-        securities = request.values.getlist('security') or []
+        if request.headers['content-type'] == 'application/json':
+            jsonData = request.get_json()
+            securities = [each['security'] for each in jsonData]
+        else:
+            securities = request.values.getlist('security') or []
     except Exception as e:
         traceback.print_exc()
         return respond400(e)

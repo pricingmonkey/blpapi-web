@@ -58,10 +58,14 @@ def index():
         traceback.print_exc()
         return respond500(e)
     try:
-        securities = request.values.getlist('security') or []
-        fields = request.values.getlist('field') or []
-        startDate = request.values.get('startDate')
-        endDate = request.values.get('endDate')
+        if request.headers['content-type'] == 'application/json':
+            jsonData = request.get_json()
+            securities, fields, startDate, endDate = parseJsonRequest(jsonData)
+        else:
+            securities = request.values.getlist('security') or []
+            fields = request.values.getlist('field') or []
+            startDate = request.values.get('startDate')
+            endDate = request.values.get('endDate')
     except Exception as e:
         traceback.print_exc()
         return respond400(e)
@@ -95,4 +99,14 @@ def index():
     response.headers['Vary'] = "Origin"
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
     return response
+
+
+def parseJsonRequest(jsonData):
+    securities = [each['security'] for each in jsonData['list']]
+    unflattenedFields = [each['fields'] for each in jsonData['list']]
+    duplicatedFields = [y for x in unflattenedFields for y in x]
+    fields = list(set(duplicatedFields))
+    startDate = jsonData['startDate']
+    endDate = jsonData['endDate']
+    return securities, fields, startDate, endDate
 

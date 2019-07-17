@@ -11,7 +11,7 @@ from .utils import allowCORS, respond400, respond500, recordBloombergHits
 
 blueprint = Blueprint('intraday', __name__)
 
-def requestIntraday(session, securities, eventTypes, startDateTime, endDateTime):
+def requestIntraday(session, securities, eventTypes, startDateTime, endDateTime, interval = 5):
     recordBloombergHits("intraday", len(securities) * len(eventTypes))
     try:
         refDataService, _ = session.getService("//blp/refdata")
@@ -25,7 +25,7 @@ def requestIntraday(session, securities, eventTypes, startDateTime, endDateTime)
                 request.set("endDateTime", endDateTime)
                 request.set("security", security)
                 request.set("eventType", eventType)
-                request.set("interval", 5)
+                request.set("interval", interval)
 
                 responses = session.sendAndWait(request)
 
@@ -40,6 +40,19 @@ def requestIntraday(session, securities, eventTypes, startDateTime, endDateTime)
         raise
 
 
+def parseJsonRequest(jsonData):
+    securities = [each['security'] for each in jsonData['list']]
+
+    unflattenedEventTypes = [each['eventType'] for each in jsonData['list']]
+    duplicatedEventTypes = [y for x in unflattenedEventTypes for y in x]
+    eventTypes = list(set(duplicatedEventTypes))
+
+    startDateTime = dateutil.parser.parse(jsonData['startDateTime'])
+    endDateTime = dateutil.parser.parse(jsonData['endDateTime'])
+    interval = jsonData['interval']
+
+    return securities, eventTypes, startDateTime, endDateTime, interval
+
 # ?eventType=[...]&security=[...]
 @blueprint.route('/', methods = ['GET'])
 def index():
@@ -50,16 +63,22 @@ def index():
         traceback.print_exc()
         return respond500(e)
     try:
-        securities = request.args.getlist('security') or []
-        eventTypes = request.args.getlist('eventType') or []
-        startDateTime = dateutil.parser.parse(request.args.get('startDateTime'))
-        endDateTime = dateutil.parser.parse(request.args.get('endDateTime'))
+        if request.headers['content-type'] == 'application/json':
+            jsonData = request.get_json()
+            securities, eventTypes, startDateTime, endDateTime, interval = parseJsonRequest(jsonData)
+        else:
+            securities = request.values.getlist('security') or []
+            eventTypes = request.values.getlist('eventType') or []
+            startDateTime = request.values.get('startDateTime')
+            endDateTime = request.values.get('endDateTime')
+            interval = request.values.get('interval')
+
     except Exception as e:
         traceback.print_exc()
         return respond400(e)
 
     try:
-        payload = json.dumps(requestIntraday(session, securities, eventTypes, startDateTime, endDateTime)).encode()
+        payload = json.dumps(requestIntraday(session, securities, eventTypes, startDateTime, endDateTime, interval)).encode()
     except Exception as e:
         handleBrokenSession(app, e)
         traceback.print_exc()
@@ -71,5 +90,3 @@ def index():
         mimetype='application/json')
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
     return response
-
-

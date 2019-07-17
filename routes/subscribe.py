@@ -26,12 +26,19 @@ def index():
         traceback.print_exc()
         return respond500(e)
     try:
-        securities = request.values.getlist('security') or []
-        fields = request.values.getlist('field') or []
-        interval = request.values.get('interval') or "2.0"
+        if request.headers['content-type'] == 'application/json':
+            jsonData = request.get_json()
+            securities, fields, interval = parseJsonRequest(jsonData)
+        else:
+            securities = request.values.getlist('security') or []
+            fields = request.values.getlist('field') or []
+            interval = request.values.get('interval')
     except Exception as e:
         traceback.print_exc()
         return respond400(e)
+
+    if not interval:
+        interval = "2.0"
 
     try:
         _, sessionRestarted = app.sessionForSubscriptions.getService("//blp/mktdata")
@@ -74,5 +81,14 @@ def index():
         mimetype='application/json')
     response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
     return response
+
+
+def parseJsonRequest(jsonData):
+    securities = [each['security'] for each in jsonData['list']]
+    unflattenedFields = [each['fields'] for each in jsonData['list']]
+    duplicatedFields = [y for x in unflattenedFields for y in x]
+    fields = list(set(duplicatedFields))
+    interval = jsonData['interval']
+    return securities, fields, interval
 
 
