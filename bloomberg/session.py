@@ -35,20 +35,28 @@ class Session:
     def reset(self):
         self.sessionImpl = None
 
+    def safeGetService(self, serviceName):
+        try:
+            return self.sessionImpl.getService(serviceName), True
+        except Exception as e:
+            opened = self.sessionImpl.openService(serviceName)
+            return self.sessionImpl.getService(serviceName), opened
+
     def openService(self, serviceName):
         if not self.isOpen():
             self.open()
 
         try:
             sessionRestarted = False
-            if not self.sessionImpl.openService(serviceName):
+            service, opened = self.safeGetService(serviceName)
+            if not opened:
                 sessionRestarted = True
                 self.sessionImpl.stop()
                 self.sessionImpl.start()
                 if not self.sessionImpl.openService(serviceName):
                     raise BrokenSessionException("Failed to open {}".format(serviceName))
 
-            return self.sessionImpl.getService(serviceName), sessionRestarted
+            return service, sessionRestarted
         except Exception as e:
             raise BrokenSessionException("Failed to open {}".format(serviceName)) from e
 
