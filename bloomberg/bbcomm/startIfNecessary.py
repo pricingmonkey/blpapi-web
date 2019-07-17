@@ -1,5 +1,6 @@
 import sys
 import traceback
+import psutil
 
 from .start import startBbcomm
 

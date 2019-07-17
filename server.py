@@ -95,6 +95,7 @@ def wireUpDevelopmentDependencies():
 
 def wireUpProductionDependencies():
     global blpapi
+    import blpapi
 
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.WARNING)

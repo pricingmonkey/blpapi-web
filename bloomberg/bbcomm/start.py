@@ -1,5 +1,5 @@
 import sys
-
+import subprocess
 
 def startBbcomm():
     if not sys.platform == "win32":
