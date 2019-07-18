@@ -1,3 +1,5 @@
+import eventlet
+
 BLOOMBERG_HOST = "localhost"
 BLOOMBERG_PORT = 8194
 
@@ -78,6 +80,7 @@ class Session:
             responseCompletelyReceived = ev.eventType() == blpapi.Event.RESPONSE
             if responseCompletelyReceived:
                 break
+            eventlet.sleep(0)
         return responses
 
     def nextEvent(self, timeout):
