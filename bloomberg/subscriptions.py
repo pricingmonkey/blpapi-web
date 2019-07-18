@@ -1,6 +1,4 @@
-import eventlet
 import traceback
-import time
 
 from utils import handleBrokenSession
 
@@ -23,11 +21,7 @@ class SubscriptionEventHandler(object):
         self.app = app
         self.socketio = socketio
 
-    def getTimeStamp(self):
-        return time.strftime("%Y/%m/%d %X")
-
     def processSubscriptionStatus(self, event):
-        timeStamp = self.getTimeStamp()
         for msg in event:
             security = msg.correlationIds()[0].value()
             if msg.messageType() == "SubscriptionFailure":
@@ -37,7 +31,6 @@ class SubscriptionEventHandler(object):
         return True
 
     def processSubscriptionDataEvent(self, event):
-        timeStamp = self.getTimeStamp()
         messages = []
         for msg in event:
             security, fieldsAsStr = msg.correlationIds()[0].value().split("~")
@@ -56,7 +49,7 @@ class SubscriptionEventHandler(object):
             self.socketio.sleep(5 / 1000)
         return True
 
-    def processEvent(self, event, session):
+    def processEvent(self, event):
         try:
             if event.eventType() == blpapi.Event.SUBSCRIPTION_DATA:
                 return self.processSubscriptionDataEvent(event)
@@ -77,7 +70,7 @@ def handleSubscriptions(app, socketio):
                 app.allSubscriptions = {}
 
             event = app.sessionForSubscriptions.nextEvent(50)
-            eventHandler.processEvent(event, app.sessionForSubscriptions)
+            eventHandler.processEvent(event)
         except Exception as e:
             traceback.print_exc()
             handleBrokenSession(app, e)
