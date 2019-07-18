@@ -28,7 +28,7 @@ app.url_map.strict_slashes = False
 
 app.allSubscriptions = {}
 app.bloombergHits = {}
-app.sessionPoolForRequests = SessionPool(5)
+app.sessionPoolForRequests = SessionPool(2)
 app.sessionForSubscriptions = Session()
 
 app.register_blueprint(latest.blueprint, url_prefix='/latest')
