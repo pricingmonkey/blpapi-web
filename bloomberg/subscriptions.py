@@ -4,15 +4,19 @@ import time
 
 from utils import handleBrokenSession
 
-def extractFieldValues(message):
+
+def extractFieldValues(message, fields):
     d = {}
     for each in message.asElement().elements():
         if each.numValues() > 0:
             try:
-                d[str(each.name())] = each.getValueAsString()
+                fieldName = str(each.name())
+                if fieldName in fields:
+                    d[fieldName] = each.getValueAsString()
             except Exception as e:
                 traceback.print_exc()
     return d
+
 
 class SubscriptionEventHandler(object):
     def __init__(self, app, socketio):
@@ -36,11 +40,12 @@ class SubscriptionEventHandler(object):
         timeStamp = self.getTimeStamp()
         messages = []
         for msg in event:
-            security = msg.correlationIds()[0].value()
+            security, fieldsAsStr = msg.correlationIds()[0].value().split("~")
+            fields = fieldsAsStr.split(",")
             messages.append({
                 "type": "SUBSCRIPTION_DATA",
                 "security": security,
-                "values": extractFieldValues(msg)
+                "values": extractFieldValues(msg, fields)
             })
             if len(messages) > 10:
                 self.socketio.emit("action", messages, namespace="/")

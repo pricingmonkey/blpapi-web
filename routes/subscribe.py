@@ -46,20 +46,21 @@ def index():
             app.allSubscriptions = {}
 
         for security in securities:
-            correlationId = blpapi.CorrelationId(sys.intern(security))
-
             subscriptionList = blpapi.SubscriptionList()
             if not security in app.allSubscriptions:
-                app.allSubscriptions[security] = list(fields)
+                newFields = list(fields)
+                app.allSubscriptions[security] = newFields
 
+                correlationId = blpapi.CorrelationId(sys.intern(security) + "~" + sys.intern(','.join(newFields)))
                 subscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
                 app.sessionForSubscriptions.subscribe(subscriptionList)
 
                 recordBloombergHits("subscribe", len(fields))
             else:
-                app.allSubscriptions[security] += fields
-                app.allSubscriptions[security] = list(set(app.allSubscriptions[security]))
+                newFields = list(set(app.allSubscriptions[security] + fields))
+                app.allSubscriptions[security] = newFields
 
+                correlationId = blpapi.CorrelationId(sys.intern(security) + "~" + sys.intern(','.join(newFields)))
                 subscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
 
                 try:
