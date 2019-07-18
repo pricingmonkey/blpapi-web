@@ -44,32 +44,34 @@ def index():
         _, sessionRestarted = app.sessionForSubscriptions.getService("//blp/mktdata")
         if sessionRestarted:
             app.allSubscriptions = {}
-        subscriptionList = blpapi.SubscriptionList()
-        resubscriptionList = blpapi.SubscriptionList()
+
         for security in securities:
             correlationId = blpapi.CorrelationId(sys.intern(security))
+
+            subscriptionList = blpapi.SubscriptionList()
             if not security in app.allSubscriptions:
                 app.allSubscriptions[security] = list(fields)
+
                 subscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
+                app.sessionForSubscriptions.subscribe(subscriptionList)
+
                 recordBloombergHits("subscribe", len(fields))
             else:
                 app.allSubscriptions[security] += fields
                 app.allSubscriptions[security] = list(set(app.allSubscriptions[security]))
-                resubscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
+
+                subscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
+
+                try:
+                    app.sessionForSubscriptions.resubscribe(subscriptionList)
+                except Exception as e:
+                    traceback.print_exc()
+                    recordBloombergHits("unsubscribe", subscriptionList.size() * 3)
+                    app.sessionForSubscriptions.unsubscribe(subscriptionList)
+                    recordBloombergHits("subscribe", subscriptionList.size() * 3)
+                    app.sessionForSubscriptions.subscribe(subscriptionList)
+
                 recordBloombergHits("resubscribe", len(fields))
-
-        if subscriptionList.size() != 0:
-            app.sessionForSubscriptions.subscribe(subscriptionList)
-
-        if resubscriptionList.size() != 0:
-            try:
-                app.sessionForSubscriptions.resubscribe(resubscriptionList)
-            except Exception as e:
-                traceback.print_exc()
-                recordBloombergHits("unsubscribe", resubscriptionList.size() * 3)
-                app.sessionForSubscriptions.unsubscribe(resubscriptionList)
-                recordBloombergHits("subscribe", resubscriptionList.size() * 3)
-                app.sessionForSubscriptions.subscribe(resubscriptionList)
     except Exception as e:
         handleBrokenSession(app, e)
         traceback.print_exc()
