@@ -1,0 +1,147 @@
+{
+	"info": {
+		"_postman_id": "2bfd8ade-8e97-4b41-8c32-b88b5b71646a",
+		"name": "Pricing Monkey - Widget API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "/latest",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n\t{\n\t\t\"security\": \"FGBML2018\",\n\t\t\"fields\": [\"ASK\"]\n\t}\n]"
+				},
+				"url": {
+					"raw": "http://localhost:6659/latest",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6659",
+					"path": [
+						"latest"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/historical",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"startDate\": \"20180101\",\n\t\"endDate\": \"20180110\",\n\t\"list\": [{\n\t\t\"security\": \"FGBML2018\",\n\t\t\"fields\": [\"ASK\"]\n\t}, {\n\t\t\"security\": \"FGBMZ2018\",\n\t\t\"fields\": [\"ASK\"]\n\t}]\n}"
+				},
+				"url": {
+					"raw": "http://localhost:6659/historical",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6659",
+					"path": [
+						"historical"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/subscribe",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"interval\": \"1\",\n\t\"list\": [{\n\t\t\"security\": \"FGBML2018\",\n\t\t\"fields\": [\"ASK\"]\n\t}]\n}"
+				},
+				"url": {
+					"raw": "http://localhost:6659/subscribe",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6659",
+					"path": [
+						"subscribe"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/intraday",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"startDateTime\": \"2018-01-01 10:00\",\n\t\"endDateTime\": \"2018-01-01 10:15\",\n\t\"interval\": \"5\",\n\t\"list\": [{\n\t\t\"security\": \"FGBML2018\",\n\t\t\"eventType\": [\"ASK\"]\n\t}, {\n\t\t\"security\": \"FGBMZ2018\",\n\t\t\"eventType\": [\"ASK\"]\n\t}]\n}"
+				},
+				"url": {
+					"raw": "http://localhost:6659/intraday",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6659",
+					"path": [
+						"intraday"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "a35e76cc-43a5-4de9-b899-e9b2bc17e6a7",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "1cfa8d32-44de-4c22-b71e-54fd5365b2ff",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
