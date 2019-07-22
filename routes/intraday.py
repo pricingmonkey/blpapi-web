@@ -54,7 +54,7 @@ def parseJsonRequest(jsonData):
     return securities, eventTypes, startDateTime, endDateTime, interval
 
 # ?eventType=[...]&security=[...]
-@blueprint.route('/', methods = ['GET'])
+@blueprint.route('/', methods = ['GET', 'POST'])
 def index():
     try:
         session = app.sessionPoolForRequests.getSession()
