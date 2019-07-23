@@ -21,7 +21,7 @@ from routes.utils import allowCORS
 from bloomberg.subscriptions import handleSubscriptions
 from utils import main_is_frozen
 
-VERSION = "2.6"
+VERSION = "2.7"
 app = Flask(__name__)
 
 app.url_map.strict_slashes = False

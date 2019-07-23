@@ -1,6 +1,8 @@
+#define AppName "Web API for Bloomberg Market Data"
+#define AppVersion "2.7"
 [Setup]
-AppName=Web API for Bloomberg Market Data
-AppVersion=2.6
+AppName={#AppName}
+AppVersion={#AppVersion}
 AppPublisher=Pricing Monkey Ltd
 LicenseFile=.\FULL_LICENSE
 DefaultDirName={pf}\Pricing Monkey
@@ -16,6 +18,9 @@ ArchitecturesAllowed=x64
 ; done in "64-bit mode" on x64, meaning it should use the native
 ; 64-bit Program Files directory and the 64-bit view of the registry.
 ArchitecturesInstallIn64BitMode=x64
+
+[Messages]
+SetupWindowTitle = Setup - {#AppName} v{#AppVersion}
 
 [Files]
 Source: "build/*.*"; DestDir: "{app}"; Flags: recursesubdirs
