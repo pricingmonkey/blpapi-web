@@ -2,19 +2,15 @@ import traceback
 
 from utils import handleBrokenSession
 
-
-def extractFieldValues(message, fields):
+def extractFieldValues(message):
     d = {}
     for each in message.asElement().elements():
         if each.numValues() > 0:
             try:
-                fieldName = str(each.name())
-                if fieldName in fields:
-                    d[fieldName] = each.getValueAsString()
+                d[str(each.name())] = each.getValueAsString()
             except Exception as e:
                 traceback.print_exc()
     return d
-
 
 class SubscriptionEventHandler(object):
     def __init__(self, app, socketio):
@@ -33,12 +29,11 @@ class SubscriptionEventHandler(object):
     def processSubscriptionDataEvent(self, event):
         messages = []
         for msg in event:
-            security, fieldsAsStr = msg.correlationIds()[0].value().split("~")
-            fields = fieldsAsStr.split(",")
+            security = msg.correlationIds()[0].value()
             messages.append({
                 "type": "SUBSCRIPTION_DATA",
                 "security": security,
-                "values": extractFieldValues(msg, fields)
+                "values": extractFieldValues(msg)
             })
             if len(messages) > 10:
                 self.socketio.emit("action", messages, namespace="/")
