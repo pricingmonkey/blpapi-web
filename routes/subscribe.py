@@ -53,9 +53,9 @@ def index():
                 app.allSubscriptions[security] = list(fields)
 
                 subscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
-                app.sessionForSubscriptions.subscribe(subscriptionList)
 
                 recordBloombergHits("subscribe", len(fields))
+                app.sessionForSubscriptions.subscribe(subscriptionList)
             else:
                 app.allSubscriptions[security] += fields
                 app.allSubscriptions[security] = list(set(app.allSubscriptions[security]))
@@ -63,6 +63,7 @@ def index():
                 subscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
 
                 try:
+                    recordBloombergHits("resubscribe", len(fields))
                     app.sessionForSubscriptions.resubscribe(subscriptionList)
                 except Exception as e:
                     traceback.print_exc()
@@ -70,8 +71,6 @@ def index():
                     app.sessionForSubscriptions.unsubscribe(subscriptionList)
                     recordBloombergHits("subscribe", subscriptionList.size() * 3)
                     app.sessionForSubscriptions.subscribe(subscriptionList)
-
-                recordBloombergHits("resubscribe", len(fields))
     except Exception as e:
         handleBrokenSession(app, e)
         traceback.print_exc()
