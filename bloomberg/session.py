@@ -69,18 +69,19 @@ class Session:
         eventQueue=blpapi.EventQueue()
         self.sessionImpl.sendRequest(request, eventQueue=eventQueue)
         responses = []
-        while(True):
-            ev = eventQueue.nextEvent(50)
-            if ev.eventType() == blpapi.Event.TIMEOUT:
+        while True:
+            ev = eventQueue.tryNextEvent()
+            if not ev:
+                eventlet.sleep(25 / 1000)
                 continue
 
             for msg in ev:
                 if msg.messageType() == blpapi.Name("ReferenceDataResponse") or msg.messageType() == blpapi.Name("HistoricalDataResponse") or msg.messageType() == blpapi.Name("IntradayBarResponse"):
                     responses.append(msg)
+
             responseCompletelyReceived = ev.eventType() == blpapi.Event.RESPONSE
             if responseCompletelyReceived:
                 break
-            eventlet.sleep(0)
         return responses
 
     def nextEvent(self, timeout):
