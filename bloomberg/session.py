@@ -30,9 +30,11 @@ class Session:
         return
 
     def stop(self):
-        if self.isStarted():
-            self.sessionImpl.stop()
-        self.reset()
+        try:
+            if self.isStarted():
+                self.sessionImpl.stop()
+        finally:
+            self.reset()
 
     def reset(self):
         self.sessionImpl = None
