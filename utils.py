@@ -15,8 +15,8 @@ def get_main_dir():
     return os.path.dirname(os.path.realpath(__file__))
 
 def handleBrokenSession(app, e):
+    app.sessionPoolForRequests.stop()
+    app.sessionForSubscriptions.stop()
+    app.allSubscriptions = {}
     if isinstance(e, BrokenSessionException):
-        app.sessionPoolForRequests.stop()
-        app.sessionForSubscriptions.stop()
-        app.allSubscriptions = {}
         restartBbcomm()

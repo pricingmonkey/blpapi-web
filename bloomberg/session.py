@@ -1,3 +1,4 @@
+import traceback
 import eventlet
 
 BLOOMBERG_HOST = "localhost"
@@ -33,6 +34,9 @@ class Session:
         try:
             if self.isStarted():
                 self.sessionImpl.stop()
+        except:
+            traceback.print_exc()
+            pass
         finally:
             self.reset()
 
