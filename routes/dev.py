@@ -16,6 +16,35 @@ class BrokenSession:
     def stop(self):
         raise Exception("broken")
 
+    def getService(self, serviceName):
+        raise Exception("broken")
+
+    def openService(self, serviceName):
+        raise Exception("broken")
+
+    def nextEvent(self, param):
+        raise Exception("broken")
+
+class DisconnectedSession:
+    def __init__(self, parentSession):
+        self.parentSession = parentSession
+
+    def start(self):
+        self.parentSession = blpapi.Session()
+        return True
+
+    def stop(self):
+        raise Exception("disconnected")
+
+    def getService(self, serviceName):
+        raise Exception("disconnected")
+
+    def openService(self, serviceName):
+        raise Exception("disconnected")
+
+    def nextEvent(self, param):
+        raise Exception("disconnected")
+
 @blueprint.route('/requests/session/reset', methods = ['GET'])
 def resetSessionForRequests():
     app.sessionPoolForRequests.reset()
@@ -41,6 +70,13 @@ def startSessionForRequests():
         blpapi.Session = OriginalSession[0]
         app.sessionPoolForRequests.reset()
         app.sessionForSubscriptions.reset()
+    return Response("OK", status=200)
+
+@blueprint.route('/session/disconnect', methods = ['GET'])
+def disconnectSession():
+    app.sessionPoolForRequests.sessions[0].sessionImpl = DisconnectedSession(app.sessionPoolForRequests.sessions[0])
+    app.sessionPoolForRequests.sessions[1].sessionImpl = DisconnectedSession(app.sessionPoolForRequests.sessions[1])
+    app.sessionForSubscriptions.sessionImpl = DisconnectedSession(app.sessionForSubscriptions)
     return Response("OK", status=200)
 
 def functionOneTimeBroken(original):
