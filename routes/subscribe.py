@@ -15,6 +15,33 @@ def tellThemWhenCORSIsAllowed():
     response.headers['Access-Control-Allow-Methods'] = ", ".join(["GET", "POST", "OPTIONS"])
     return response
 
+def doSubscribe(correlationId, security, fields, interval):
+    subscriptionList = blpapi.SubscriptionList()
+    app.allSubscriptions[security] = list(fields)
+
+    subscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
+
+    recordBloombergHits("subscribe", len(fields))
+    app.sessionForSubscriptions.subscribe(subscriptionList)
+
+def doResubscribe(correlationId, security, fields, interval):
+    subscriptionList = blpapi.SubscriptionList()
+    app.allSubscriptions[security] = list(fields)
+    app.allSubscriptions[security] += fields
+    app.allSubscriptions[security] = list(set(app.allSubscriptions[security]))
+
+    subscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
+
+    try:
+        recordBloombergHits("resubscribe", len(fields))
+        app.sessionForSubscriptions.resubscribe(subscriptionList)
+    except Exception as e:
+        traceback.print_exc()
+        recordBloombergHits("unsubscribe", subscriptionList.size() * 3)
+        app.sessionForSubscriptions.unsubscribe(subscriptionList)
+        recordBloombergHits("subscribe", subscriptionList.size() * 3)
+        app.sessionForSubscriptions.subscribe(subscriptionList)
+
 @blueprint.route('/', methods = ['GET', 'POST'])
 def index():
     try:
@@ -48,29 +75,13 @@ def index():
         for security in securities:
             correlationId = blpapi.CorrelationId(sys.intern(security))
 
-            subscriptionList = blpapi.SubscriptionList()
             if not security in app.allSubscriptions:
-                app.allSubscriptions[security] = list(fields)
-
-                subscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
-
-                recordBloombergHits("subscribe", len(fields))
-                app.sessionForSubscriptions.subscribe(subscriptionList)
-            else:
-                app.allSubscriptions[security] += fields
-                app.allSubscriptions[security] = list(set(app.allSubscriptions[security]))
-
-                subscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
-
                 try:
-                    recordBloombergHits("resubscribe", len(fields))
-                    app.sessionForSubscriptions.resubscribe(subscriptionList)
-                except Exception as e:
-                    traceback.print_exc()
-                    recordBloombergHits("unsubscribe", subscriptionList.size() * 3)
-                    app.sessionForSubscriptions.unsubscribe(subscriptionList)
-                    recordBloombergHits("subscribe", subscriptionList.size() * 3)
-                    app.sessionForSubscriptions.subscribe(subscriptionList)
+                    doSubscribe(correlationId, security, fields, interval)
+                except blpapi.DuplicateCorrelationIdException as e:
+                    doResubscribe(correlationId, security, fields, interval)
+            else:
+                doResubscribe(correlationId, security, fields, interval)
     except Exception as e:
         handleBrokenSession(app, e)
         traceback.print_exc()
