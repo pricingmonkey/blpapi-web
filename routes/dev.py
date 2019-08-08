@@ -13,6 +13,9 @@ class BrokenSession:
     def start(self):
         return False
 
+    def stop(self):
+        raise Exception("broken")
+
 @blueprint.route('/requests/session/reset', methods = ['GET'])
 def resetSessionForRequests():
     app.sessionPoolForRequests.reset()
