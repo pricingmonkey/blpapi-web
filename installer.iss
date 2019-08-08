@@ -1,5 +1,5 @@
 #define AppName "Web API for Bloomberg Market Data"
-#define AppVersion "2.7"
+#define AppVersion "2.7.1"
 [Setup]
 AppName={#AppName}
 AppVersion={#AppVersion}
