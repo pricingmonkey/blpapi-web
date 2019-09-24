@@ -36,7 +36,7 @@ app.register_blueprint(historical.blueprint, url_prefix='/historical')
 app.register_blueprint(intraday.blueprint, url_prefix='/intraday')
 app.register_blueprint(subscribe.blueprint, url_prefix='/subscribe')
 app.register_blueprint(unsubscribe.blueprint, url_prefix='/unsubscribe')
-socketio = SocketIO(app, async_mode="eventlet")
+socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")
 
 @app.route('/status', methods = ['OPTIONS'])
 @app.route('/subscriptions', methods = ['OPTIONS'])
