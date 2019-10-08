@@ -1,7 +1,8 @@
 # Info
 
 This module pulls price information from external data providers (eg. Bloomberg).
-Runs on Python == 3.4.
+Windows: Runs on Python == 3.4.
+MacOS: Runs on Python == 3.7.
 
 # Windows (see the end of doc for mac instructions)
 
@@ -125,3 +126,29 @@ Run:
 ## To run Server from terminal
 
     python server.py --simulator
+
+## To build MacOS app
+
+1. Go to https://www.bloomberglabs.com/api/libraries/ and download C/C++ supported
+release for MacOS.
+2. Go to the downloaded file which is zipped. Extract it to selected directory.
+3. Add environment variable BLPAPI_ROOT to point to directory containing previously
+extracted Bloomberg C++ API.
+
+Run:
+
+    pip install git+https://github.com/msitt/blpapi-python
+    cp ./venv/lib/python3.7/site-packages/blpapi/_internals.cpython-37m-darwin.so .
+    python setup.py py2app
+
+You can make sure executable works by running dist/BBAPI.app/Contents/MacOS/BBAPI. At the
+minimum - even where there is no connectivity to Bloomberg Terminal - you should see no other
+errors than **bloomberg.session.BrokenSessionException: Failed to start session on localhost:8194**.
+
+Caveat:
+  - Error "Mismatch between C++ and Python SDK libraries." means that a version
+    of blpapi-python and ext/libblpapi3_64.so do not match. Resolving this can
+    be quite tricky, but you can access wider range of blpapi-python at
+    **pip install git+https://github.com/msitt/blpapi-python#vX.Y.Z** and blpapi-cpp
+    at **https://bloomberg.bintray.com/BLPAPI-Experimental-Generic/**
+    

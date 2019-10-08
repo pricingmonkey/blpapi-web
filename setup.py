@@ -54,8 +54,8 @@ elif sys.platform == 'darwin':
     OPTIONS = {
         'argv_emulation': False,
         'iconfile': 'icon.icns',
-        'includes': ['_internals', 'urllib', 'engineio.async_eventlet', 'engineio.async_threading'],
-        'packages': ['blpapi', 'encodings', 'eventlet']
+        'includes': ['_internals', 'urllib', 'engineio.async_drivers.threading', 'engineio.async_drivers.eventlet'],
+        'packages': ['blpapi', 'encodings', 'eventlet', 'dns', 'jinja2']
     }
 
     setup(
