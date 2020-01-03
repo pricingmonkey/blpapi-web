@@ -6,7 +6,7 @@ All other trademarks and registered trademarks are the property of their respect
 Web API for Bloomberg Market Data - exposes Bloomberg API (BLPAPI) through
 a localhost HTTP server.
 
-Copyright (C) 2016-2017 Pricing Monkey Ltd
+Copyright (C) 2016-2020 Pricing Monkey Ltd
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
