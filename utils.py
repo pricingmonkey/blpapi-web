@@ -18,5 +18,5 @@ def handleBrokenSession(app, e):
     app.sessionPoolForRequests.stop()
     app.sessionForSubscriptions.stop()
     app.allSubscriptions = {}
-    if isinstance(e, BrokenSessionException):
-        restartBbcomm()
+    # if isinstance(e, BrokenSessionException):
+    #     restartBbcomm()
