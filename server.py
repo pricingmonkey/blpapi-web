@@ -100,7 +100,7 @@ def wireUpProductionDependencies():
 
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.WARNING)
-    startBbcommIfNecessary()
+    # startBbcommIfNecessary()
 
 
 def main(port = 6659):
