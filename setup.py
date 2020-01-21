@@ -24,13 +24,8 @@ if sys.platform == 'win32':
 
     standalone_server = Target(
         script = 'server.py',
-        dest_base = 'run'
-    )
-
-    service = Target(
-        modules = ['windows-service'],
-        cmdline_style='pywin32',
-        dest_base = 'run-service'
+        dest_base = 'bbapi',
+        description = 'Web API for Bloomberg Market Data'
     )
 
     setup(
@@ -43,8 +38,7 @@ if sys.platform == 'win32':
                 'includes': ['_internals', 'urllib', 'engineio.async_eventlet', 'engineio.async_threading'],
                 'packages': ['blpapi', 'encodings', 'eventlet']
             }},
-            console=[standalone_server],
-        service=[service]
+            console=[standalone_server]
     )
 elif sys.platform == 'darwin':
     from setuptools import setup

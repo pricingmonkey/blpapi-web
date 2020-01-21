@@ -136,11 +136,21 @@ if __name__ == "__main__":
                         help='log level')
     parser.add_argument('--port', type=int, default=6659,
                         help='port number (default: 6659)')
+    parser.add_argument('--no-ui', action='store_true',
+                        help='hide console after starting (Windows only)')
 
     args = parser.parse_args()
 
     if args.log is not None:
         logging.basicConfig(level=getattr(logging, args.log.upper(), None))
+
+    if args.no_ui:
+        import win32gui, win32con
+
+        program_to_hide = win32gui.GetForegroundWindow()
+        program_title  = win32gui.GetWindowText(frgrnd_wndw);
+        if program_title.endswith("bbapi.exe"):
+            win32gui.ShowWindow(program_to_hide, win32con.SW_HIDE);
 
     if args.simulator:
         print("Using blpapi_simulator")
