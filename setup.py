@@ -25,7 +25,8 @@ if sys.platform == 'win32':
     standalone_server = Target(
         script = 'server.py',
         dest_base = 'bbapi',
-        description = 'Web API for Bloomberg Market Data'
+        description = 'Web API for Bloomberg Market Data',
+        icon_resources = [(1, 'icon.ico')]
     )
 
     setup(
