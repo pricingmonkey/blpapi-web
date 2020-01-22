@@ -1,6 +1,6 @@
 #define AppName "Pricing Monkey Web API for Bloomberg Market Data"
 #define ShortAppName "Pricing Monkey"
-#define AppVersion "2.7.1"
+#define AppVersion "3.0.0"
 [Setup]
 AppName={#AppName}
 AppVersion={#AppVersion}
