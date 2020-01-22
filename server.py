@@ -56,6 +56,7 @@ def status():
     status = "UP" if app.sessionPoolForRequests.isHealthy() or app.sessionForSubscriptions else "DOWN"
     response = Response(
         json.dumps({
+            "source": "bloomberg",
             "status": status,
             "version": VERSION,
             "metrics": {
