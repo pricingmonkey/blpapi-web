@@ -53,7 +53,7 @@ def tellThemWhenCORSIsAllowed():
 
 @app.route('/status', methods = ['GET'])
 def status():
-    status = "UP" if app.sessionPoolForRequests.isHealthy() or app.sessionForSubscriptions else "DOWN"
+    status = "UP" if app.sessionPoolForRequests.isHealthy() or app.sessionForSubscriptions.isHealthy() else "DOWN"
     response = Response(
         json.dumps({
             "source": "bloomberg",
