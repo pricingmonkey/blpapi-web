@@ -149,7 +149,7 @@ if __name__ == "__main__":
         import win32gui, win32con
 
         program_to_hide = win32gui.GetForegroundWindow()
-        program_title  = win32gui.GetWindowText(frgrnd_wndw);
+        program_title  = win32gui.GetWindowText(program_to_hide);
         if program_title.endswith("bbapi.exe"):
             win32gui.ShowWindow(program_to_hide, win32con.SW_HIDE);
 
