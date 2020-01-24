@@ -34,8 +34,35 @@ Source: "ext/vc_redist_2010.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 Source: "ext/vc_redist_2015.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 
 [Run]
-Filename: {tmp}\vc_redist_2010.x64.exe; Parameters: "/q /norestart"; StatusMsg: Installing Microsoft Visual C++ 2010 Redistributables...
-Filename: {tmp}\vc_redist_2015.x64.exe; Parameters: "/install /quiet /norestart"; StatusMsg: Installing Microsoft Visual C++ 2015 Redistributables...
+Filename: {tmp}\vc_redist_2010.x64.exe; Parameters: "/q /norestart"; StatusMsg: Installing Microsoft Visual C++ 2010 Redistributables...; Check: IsAdmin;
+Filename: {tmp}\vc_redist_2015.x64.exe; Parameters: "/install /quiet /norestart"; StatusMsg: Installing Microsoft Visual C++ 2015 Redistributables...; Check: IsAdmin;
+
+[Code]
+function CreateBatch(): boolean;
+var
+  fileName : string;
+  lines : TArrayOfString;
+begin
+  Result := true;
+  fileName := ExpandConstant('{app}\Restart Pricing Monkey.bat');
+  SetArrayLength(lines, 2);
+  lines[0] := 'taskkill /im bbapi.exe /f';
+  lines[1] := ExpandConstant('bbapi.exe --no-ui');
+  Result := SaveStringsToFile(filename, lines, true);
+  exit;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if  CurStep=ssPostInstall then
+    begin
+         CreateBatch();
+    end
+end;
+
+[Icons]
+Name: "{commonstartmenu}\{#ShortAppName}\Restart Pricing Monkey"; Filename: "{app}\Restart Pricing Monkey.bat"; WorkingDir: "{app}"
+
 
 [Run]
 Filename: "{app}\bbapi.exe"; WorkingDir: "{app}"; Flags: nowait runhidden runasoriginaluser; StatusMsg: Finishing installation. Please wait, this might take a few minutes...
