@@ -146,12 +146,10 @@ if __name__ == "__main__":
         logging.basicConfig(level=getattr(logging, args.log.upper(), None))
 
     if args.no_ui:
-        import win32gui, win32con
+        import win32gui, win32console
 
-        program_to_hide = win32gui.GetForegroundWindow()
-        program_title  = win32gui.GetWindowText(program_to_hide);
-        if program_title.endswith("bbapi.exe"):
-            win32gui.ShowWindow(program_to_hide, win32con.SW_HIDE);
+        window = win32console.GetConsoleWindow()
+        win32gui.ShowWindow(window, 0)
 
     if args.simulator:
         print("Using blpapi_simulator")
