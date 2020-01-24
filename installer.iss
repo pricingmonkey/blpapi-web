@@ -44,7 +44,7 @@ Filename: "sc"; Parameters: "delete BBApi"; Flags: shellexec runhidden; StatusMs
 Filename: "sc"; Parameters: "delete ""Pricing Monkey Bloomberg Bridge"""; Flags: shellexec runhidden; StatusMsg: Finishing installation. Please wait, this might take a few minutes..
 
 [Registry]
-Root: HKA; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#ShortAppName}"; ValueData: "'"{app}\bbapi.exe"' --no-ui";
+Root: HKA; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#ShortAppName}"; ValueData: """{app}\bbapi.exe"" --no-ui"; Flags: uninsdeletekey;
 
 [UninstallRun]
 Filename: "taskkill"; Parameters: "/im bbapi.exe /f"; Flags: shellexec runhidden
