@@ -61,7 +61,7 @@ begin
 end;
 
 [Icons]
-Name: "{commonstartmenu}\{#ShortAppName}\Restart Pricing Monkey"; Filename: "{app}\Restart Pricing Monkey.bat"; WorkingDir: "{app}"
+Name: "{autostartmenu}\{#ShortAppName}\Restart Pricing Monkey"; Filename: "{app}\Restart Pricing Monkey.bat"; WorkingDir: "{app}"
 
 
 [Run]
