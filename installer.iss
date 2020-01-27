@@ -8,6 +8,7 @@ AppPublisher=Pricing Monkey Ltd
 AppPublisherURL=https://pricingmonkey.com
 LicenseFile=.\FULL_LICENSE
 DefaultDirName={autopf}\{#ShortAppName}
+DefaultGroupName={#ShortAppName}
 UninstallDisplayIcon={app}\uninstall.exe
 Compression=lzma2
 SolidCompression=yes
