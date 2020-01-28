@@ -62,7 +62,8 @@ begin
 end;
 
 [Icons]
-Name: "{autostartmenu}\{#ShortAppName}\Restart Pricing Monkey"; Filename: "{app}\Restart Pricing Monkey.bat"; WorkingDir: "{app}"
+Name: "{autostartmenu}\{#ShortAppName}\Restart {#ShortAppName}"; Filename: "{app}\Restart Pricing Monkey.bat"; WorkingDir: "{app}"
+Name: "{autostartmenu}\{#ShortAppName}\Uninstall {#ShortAppName}"; Filename: "{app}\unins000.exe"; WorkingDir: "{app}"
 
 
 [Run]
@@ -74,5 +75,9 @@ Filename: "sc"; Parameters: "delete ""Pricing Monkey Bloomberg Bridge"""; Flags:
 [Registry]
 Root: HKA; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#ShortAppName}"; ValueData: """{app}\bbapi.exe"" --no-ui"; Flags: uninsdeletekey;
 
+[UninstallDelete]
+Type: files; Name: "{app}\Restart Pricing Monkey.bat";
+
 [UninstallRun]
-Filename: "taskkill"; Parameters: "/im bbapi.exe /f"; Flags: shellexec runhidden
+Filename: "taskkill"; Parameters: "/im bbapi.exe /f"; Flags: shellexec runhidden waituntilterminated
+Filename: "timeout"; Parameters: "/t 2 /nobreak"; Flags: shellexec runhidden waituntilterminated
