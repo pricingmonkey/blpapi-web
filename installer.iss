@@ -2,6 +2,8 @@
 #define ShortAppName "Pricing Monkey"
 #define AppVersion "3.0.0"
 [Setup]
+; AppId can never change, as it unique identifies the installer!
+AppId=Web API for Bloomberg Market Data
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher=Pricing Monkey Ltd
@@ -67,10 +69,9 @@ Name: "{autostartmenu}\{#ShortAppName}\Uninstall {#ShortAppName}"; Filename: "{a
 
 
 [Run]
+Filename: "sc"; Parameters: "stop BBApi"; Flags: shellexec runhidden waituntilterminated; StatusMsg: Finishing installation. Please wait, this might take a few minutes...
+Filename: "sc"; Parameters: "delete BBApi"; Flags: shellexec runhidden waituntilterminated; StatusMsg: Finishing installation. Please wait, this might take a few minutes...
 Filename: "{app}\bbapi.exe"; WorkingDir: "{app}"; Flags: nowait runhidden runasoriginaluser; StatusMsg: Finishing installation. Please wait, this might take a few minutes...
-Filename: "sc"; Parameters: "stop BBApi"; Flags: shellexec runhidden; StatusMsg: Finishing installation. Please wait, this might take a few minutes...
-Filename: "sc"; Parameters: "delete BBApi"; Flags: shellexec runhidden; StatusMsg: Finishing installation. Please wait, this might take a few minutes...
-Filename: "sc"; Parameters: "delete ""Pricing Monkey Bloomberg Bridge"""; Flags: shellexec runhidden; StatusMsg: Finishing installation. Please wait, this might take a few minutes..
 
 [Registry]
 Root: HKA; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#ShortAppName}"; ValueData: """{app}\bbapi.exe"" --no-ui"; Flags: uninsdeletekey;
