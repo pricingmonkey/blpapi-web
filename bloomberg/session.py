@@ -14,6 +14,9 @@ class Session:
     def isStarted(self):
         return self.sessionImpl is not None
 
+    def isHealthy(self):
+        return self.isStarted()
+
     def start(self):
         if self.isStarted():
             return

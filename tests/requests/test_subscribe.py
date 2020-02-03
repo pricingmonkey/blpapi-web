@@ -31,6 +31,8 @@ def test_break_service(app):
 
 def test_reset_session(app):
     assert app.get("/subscribe?security=TEST&field=TEST", headers = headers).status_code == 202
+
     assert app.get("/dev/subscriptions/session/reset").status_code == 200
+
     assert app.get("/subscribe?security=TEST&field=TEST", headers = headers).status_code == 202
 
