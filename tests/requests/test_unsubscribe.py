@@ -10,6 +10,9 @@ def app():
     app.testing = True 
     return app
 
-def test_unsubscribe():
-    result = app().get("/unsubscribe?security=TEST&field=TEST")
+headers=[('Content-Type', 'text/plain')]
+
+
+def test_unsubscribe(app):
+    result = app.get("/unsubscribe?security=TEST&field=TEST", headers = headers)
     assert result.status_code is 202
