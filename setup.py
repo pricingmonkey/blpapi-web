@@ -17,7 +17,7 @@ if sys.platform == 'win32':
         def __init__(self, **kw):
             self.__dict__.update(kw)
 
-            self.version = '3.0.1'
+            self.version = '3.0.2'
             self.company_name = 'Pricing Monkey Ltd'
             self.copyright = 'Pricing Monkey Ltd'
             self.name = 'Web API for Bloomberg Market Data'

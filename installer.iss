@@ -1,6 +1,6 @@
 #define AppName "Pricing Monkey Web API for Bloomberg Market Data"
 #define ShortAppName "Pricing Monkey"
-#define AppVersion "3.0.1"
+#define AppVersion "3.0.2"
 [Setup]
 ; AppId can never change, as it unique identifies the installer!
 AppId=Web API for Bloomberg Market Data
