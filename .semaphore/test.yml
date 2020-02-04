@@ -1,0 +1,27 @@
+version: v1.0
+name: Test
+agent:
+  machine:
+    type: e1-standard-2
+  containers:
+    - name: main
+      image: semaphoreci/python:3.7
+
+blocks:
+  - name: verify
+    task:
+      prologue:
+        commands:
+          - checkout
+          - virtualenv .venv
+          - source .venv/bin/activate
+          - export PATH=$HOME/.local/bin:$PATH
+          - mkdir .pip_cache
+          - cache restore
+          - pip install --cache-dir .pip_cache -r requirements.txt
+          - cache store
+      jobs:
+      - name: run test
+        commands:
+          - python -m pytest -r .
+
