@@ -13,12 +13,11 @@ import functools as fn
 from flask import Flask, Response, request
 from flask_socketio import SocketIO
 
-from bloomberg.session import Session
-from bloomberg.bbcomm import startBbcommIfNecessary
-from bloomberg.sessionPool import SessionPool
-from routes import latest, historical, intraday, subscribe, unsubscribe, dev
-from routes.utils import allowCORS
-from bloomberg.subscriptions import handleSubscriptions
+from bridge.bloomberg.session import Session
+from bridge.bloomberg.sessionPool import SessionPool
+from bridge.routes import latest, historical, intraday, subscribe, unsubscribe, dev
+from bridge.routes.utils import allowCORS
+from bridge.bloomberg.subscriptions import handleSubscriptions
 from utils import main_is_frozen
 
 VERSION = "3.0.2"
@@ -80,10 +79,10 @@ def subscriptions():
 
 
 def wireUpBlpapiImplementation(blpapi):
-    import bloomberg.session
-    bloomberg.session.__dict__["blpapi"] = blpapi
+    import bridge.bloomberg.session
+    bridge.bloomberg.session.__dict__["blpapi"] = blpapi
     subscribe.__dict__["blpapi"] = blpapi
-    from bloomberg import subscriptions
+    from bridge.bloomberg import subscriptions
     subscriptions.__dict__["blpapi"] = blpapi
     unsubscribe.__dict__["blpapi"] = blpapi
     dev.__dict__["blpapi"] = blpapi
@@ -97,7 +96,6 @@ def wireUpDevelopmentDependencies():
 
 def wireUpProductionDependencies():
     global blpapi
-    import blpapi
 
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.WARNING)

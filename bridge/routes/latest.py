@@ -2,8 +2,8 @@ import json
 import traceback
 from flask import Blueprint, current_app as app, request, Response
 
-from bloomberg.results.latest import extractReferenceSecurityPricing
-from bloomberg.results.errors import extractErrors
+from bridge.bloomberg.results.latest import extractReferenceSecurityPricing
+from bridge.bloomberg.results.errors import extractErrors
 from utils import handleBrokenSession
 
 from .utils import allowCORS, respond400, respond500, recordBloombergHits
@@ -47,14 +47,14 @@ def handleRequest(securities, fields):
     try:
         session = app.sessionPoolForRequests.getSession()
     except Exception as e:
-        handleBrokenSession(app, e)
+        handleBrokenSession(app)
         traceback.print_exc()
         return respond500(e)
 
     try:
         payload = json.dumps(requestLatest(session, securities, fields)).encode()
     except Exception as e:
-        handleBrokenSession(app, e)
+        handleBrokenSession(app)
         traceback.print_exc()
         return respond500(e)
 

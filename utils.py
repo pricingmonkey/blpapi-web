@@ -1,9 +1,5 @@
 import sys, imp, os
 
-from bloomberg.session import BrokenSessionException
-from bloomberg.bbcomm import restartBbcomm
-
-
 def main_is_frozen():
     return (hasattr(sys, "frozen") or # new py2exe
         hasattr(sys, "importers") # old py2exe
@@ -14,9 +10,7 @@ def get_main_dir():
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.realpath(__file__))
 
-def handleBrokenSession(app, e):
+def handleBrokenSession(app):
     app.sessionPoolForRequests.stop()
     app.sessionForSubscriptions.stop()
     app.allSubscriptions = {}
-    # if isinstance(e, BrokenSessionException):
-    #     restartBbcomm()

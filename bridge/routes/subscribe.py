@@ -49,7 +49,7 @@ def index():
             app.sessionForSubscriptions.start()
             app.allSubscriptions = {}
     except Exception as e:
-        handleBrokenSession(app, e)
+        handleBrokenSession(app)
         traceback.print_exc()
         return respond500(e)
     try:
@@ -83,7 +83,7 @@ def index():
             else:
                 doResubscribe(correlationId, security, fields, interval)
     except Exception as e:
-        handleBrokenSession(app, e)
+        handleBrokenSession(app)
         traceback.print_exc()
         return respond500(e)
 

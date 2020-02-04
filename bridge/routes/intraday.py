@@ -3,8 +3,8 @@ import json
 import traceback
 from flask import Blueprint, current_app as app, request, Response
 
-from bloomberg.results.errors import extractErrors
-from bloomberg.results.intraday import extractIntradaySecurityPricing
+from bridge.bloomberg.results.errors import extractErrors
+from bridge.bloomberg.results.intraday import extractIntradaySecurityPricing
 from utils import handleBrokenSession
 
 from .utils import allowCORS, respond400, respond500, recordBloombergHits
@@ -59,7 +59,7 @@ def index():
     try:
         session = app.sessionPoolForRequests.getSession()
     except Exception as e:
-        handleBrokenSession(app, e)
+        handleBrokenSession(app)
         traceback.print_exc()
         return respond500(e)
     try:
@@ -80,7 +80,7 @@ def index():
     try:
         payload = json.dumps(requestIntraday(session, securities, eventTypes, startDateTime, endDateTime, interval)).encode()
     except Exception as e:
-        handleBrokenSession(app, e)
+        handleBrokenSession(app)
         traceback.print_exc()
         return respond500(e)
 

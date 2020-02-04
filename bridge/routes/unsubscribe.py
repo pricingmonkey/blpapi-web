@@ -30,7 +30,7 @@ def doUnsubscribe(securities):
         recordBloombergHits("unsubscribe", subscriptionList.size())
         app.sessionForSubscriptions.unsubscribe(subscriptionList)
     except Exception as e:
-        handleBrokenSession(app, e)
+        handleBrokenSession(app)
         traceback.print_exc()
         return respond500(e)
 
@@ -48,7 +48,7 @@ def unsubscribeAll():
             app.sessionForSubscriptions.start()
             app.allSubscriptions = {}
     except Exception as e:
-        handleBrokenSession(app, e)
+        handleBrokenSession(app)
         traceback.print_exc()
         return respond500(e)
 
@@ -61,7 +61,7 @@ def unsubscribe():
             app.sessionForSubscriptions.start()
             app.allSubscriptions = {}
     except Exception as e:
-        handleBrokenSession(app, e)
+        handleBrokenSession(app)
         traceback.print_exc()
         return respond500(e)
 

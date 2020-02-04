@@ -1,5 +1,6 @@
-from bloomberg.results.intraday import extractIntradaySecurityPricing
+from bridge.bloomberg.results.intraday import extractIntradaySecurityPricing
 from blpapi_simulator.simulator.message import Message, Map, List, Element
+
 
 def test_simple():
     message = Message({

@@ -1,4 +1,4 @@
-from bloomberg.results.error import extractError
+from bridge.bloomberg.results.error import extractError
 
 
 def extractErrors(message):

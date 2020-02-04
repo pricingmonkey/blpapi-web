@@ -2,9 +2,11 @@ import eventlet
 import pytest
 
 from server import app as my_app, wireUpBlpapiImplementation
-from routes import dev
+from bridge.routes import dev
+
 
 headers=[('Content-Type', 'text/plain')]
+
 
 @pytest.fixture(scope="session")
 def app():

@@ -1,4 +1,4 @@
-from bloomberg.session import Session
+from bridge.bloomberg.session import Session
 
 
 class SessionPool:

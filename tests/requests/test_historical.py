@@ -2,7 +2,8 @@ import eventlet
 import pytest
 
 from server import app as my_app, wireUpBlpapiImplementation
-from routes import dev
+from bridge.routes import dev
+
 
 @pytest.fixture(scope="session")
 def app():
@@ -12,10 +13,13 @@ def app():
     app.testing = True 
     return app
 
+
 headers=[('Content-Type', 'text/plain')]
+
 
 def test_historical(app):
     assert app.get("/historical?security=TEST&field=TEST&startDate=20151221&endDate=20161218", headers = headers).status_code == 200
+
 
 def test_break_service(app):
     assert app.get("/historical?security=TEST&field=TEST&startDate=20151221&endDate=20161218", headers = headers).status_code == 200
@@ -26,12 +30,14 @@ def test_break_service(app):
     assert app.get("/historical?security=TEST&field=TEST&startDate=20151221&endDate=20161218", headers = headers).status_code == 500
     assert app.get("/historical?security=TEST&field=TEST&startDate=20151221&endDate=20161218", headers = headers).status_code == 200
 
+
 def test_reset_session(app):
     assert app.get("/historical?security=TEST&field=TEST&startDate=20151221&endDate=20161218", headers = headers).status_code == 200
 
     assert app.get("/dev/requests/session/reset").status_code == 200
 
     assert app.get("/historical?security=TEST&field=TEST&startDate=20151221&endDate=20161218", headers = headers).status_code == 200
+
 
 def test_break_session(app):
     assert app.get("/historical?security=TEST&field=TEST&startDate=20151221&endDate=20161218", headers = headers).status_code == 200
@@ -40,4 +46,3 @@ def test_break_session(app):
 
     assert app.get("/historical?security=TEST&field=TEST&startDate=20151221&endDate=20161218", headers = headers).status_code == 500
     assert app.get("/historical?security=TEST&field=TEST&startDate=20151221&endDate=20161218", headers = headers).status_code == 200
-

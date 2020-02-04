@@ -1,8 +1,9 @@
 import datetime
 
-from bloomberg.results.errors import extractErrors
-from bloomberg.results.historical import extractHistoricalSecurityPricing
+from bridge.bloomberg.results.errors import extractErrors
+from bridge.bloomberg.results.historical import extractHistoricalSecurityPricing
 from blpapi_simulator.simulator.message import Message, Map, List
+
 
 def test_simple():
     message = Message({
@@ -25,6 +26,7 @@ def test_simple():
     assert response[0]["date"] == "2006-01-31"
     assert response[1]["date"] == "2006-02-01"
 
+
 def test_extract_multiple_fields():
     message = Message({
         "securityData": Map({
@@ -42,6 +44,7 @@ def test_extract_multiple_fields():
     print(response)
     assert len(response) == 1
     assert len(response[0]["values"][0]["fields"]) == 2
+
 
 def test_response_error():
     message = Message({
