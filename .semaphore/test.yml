@@ -14,6 +14,7 @@ blocks:
         - name: github
       prologue:
         commands:
+          - chmod 400 ~/.ssh/github.com
           - checkout
           - virtualenv .venv
           - source .venv/bin/activate
@@ -26,6 +27,6 @@ blocks:
       jobs:
       - name: run test
         commands:
-          - pip install git+ssh://git@github.com/pricingmonkey/blpapi-simulator.git
+          - env GIT_SSH_COMMAND='ssh -i ~/.ssh/github.com' pip install git+ssh://git@github.com/pricingmonkey/blpapi-simulator.git
           - python -m pytest -r .
 
