@@ -25,6 +25,7 @@ app = Flask(__name__)
 
 app.url_map.strict_slashes = False
 
+app.source = "bloomberg"
 app.allSubscriptions = {}
 app.bloombergHits = {}
 app.sessionPoolForRequests = SessionPool(2)
@@ -55,7 +56,7 @@ def status():
     status = "UP" if app.sessionPoolForRequests.isHealthy() or app.sessionForSubscriptions.isHealthy() else "DOWN"
     response = Response(
         json.dumps({
-            "source": "bloomberg",
+            "source": app.source,
             "status": status,
             "version": VERSION,
             "metrics": {
@@ -129,6 +130,8 @@ if main_is_frozen():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('--source', 
+                        help='impersonate different market data source')
     parser.add_argument('--simulator', action='store_true',
                         help='simulate Bloomberg API (instead of using real connection)')
     parser.add_argument('--log', choices=['critical', 'error', 'warn', 'info', 'debug'],
@@ -139,6 +142,9 @@ if __name__ == "__main__":
                         help='hide console after starting (Windows only)')
 
     args = parser.parse_args()
+
+    if args.source is not None:
+        app.source = args.source
 
     if args.log is not None:
         logging.basicConfig(level=getattr(logging, args.log.upper(), None))
