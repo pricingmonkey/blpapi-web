@@ -26,7 +26,6 @@ def doSubscribe(correlationId, security, fields, interval):
 
 def doResubscribe(correlationId, security, fields, interval):
     subscriptionList = blpapi.SubscriptionList()
-    app.allSubscriptions[security] = list(fields)
     app.allSubscriptions[security] += fields
     app.allSubscriptions[security] = list(set(app.allSubscriptions[security]))
 
