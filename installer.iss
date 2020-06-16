@@ -1,5 +1,5 @@
 #define AppName "Pricing Monkey Web API for Bloomberg Market Data"
-#define ShortAppName "Pricing Monkey"
+#define ShortAppName "Pricing Monkey Bloomberg"
 #define AppVersion "3.0.2"
 [Setup]
 ; AppId can never change, as it unique identifies the installer!
@@ -9,8 +9,8 @@ AppVersion={#AppVersion}
 AppPublisher=Pricing Monkey Ltd
 AppPublisherURL=https://pricingmonkey.com
 LicenseFile=.\FULL_LICENSE
-DefaultDirName={autopf}\{#ShortAppName}
-DefaultGroupName={#ShortAppName}
+DefaultDirName={autopf}\Pricing Monkey\Bloomberg
+DefaultGroupName=Pricing Monkey\Bloomberg
 UninstallDisplayIcon={app}\uninstall.exe
 Compression=lzma2
 SolidCompression=yes
@@ -23,7 +23,7 @@ ArchitecturesAllowed=x64
 ; done in "64-bit mode" on x64, meaning it should use the native
 ; 64-bit Program Files directory and the 64-bit view of the registry.
 ArchitecturesInstallIn64BitMode=x64
-PrivilegesRequiredOverridesAllowed=commandline dialog
+PrivilegesRequiredOverridesAllowed=commandline
 WizardStyle=modern
 
 [Messages]
@@ -47,7 +47,7 @@ var
   lines : TArrayOfString;
 begin
   Result := true;
-  fileName := ExpandConstant('{app}\Restart Pricing Monkey.bat');
+  fileName := ExpandConstant('{app}\Restart Pricing Monkey Bloomberg.bat');
   SetArrayLength(lines, 2);
   lines[0] := 'taskkill /im bbapi.exe /f';
   lines[1] := ExpandConstant('bbapi.exe --no-ui');
@@ -64,8 +64,8 @@ begin
 end;
 
 [Icons]
-Name: "{autostartmenu}\{#ShortAppName}\Restart {#ShortAppName}"; Filename: "{app}\Restart Pricing Monkey.bat"; WorkingDir: "{app}"
-Name: "{autostartmenu}\{#ShortAppName}\Uninstall {#ShortAppName}"; Filename: "{app}\unins000.exe"; WorkingDir: "{app}"
+Name: "{group}\Restart {#ShortAppName} Link"; Filename: "{app}\Restart Pricing Monkey Bloomberg.bat"; WorkingDir: "{app}"
+Name: "{group}\Uninstall {#ShortAppName} Link"; Filename: "{uninstallexe}"; WorkingDir: "{app}"
 
 
 [Run]
@@ -77,7 +77,7 @@ Filename: "{app}\bbapi.exe"; WorkingDir: "{app}"; Flags: nowait runhidden runaso
 Root: HKA; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#ShortAppName}"; ValueData: """{app}\bbapi.exe"" --no-ui"; Flags: uninsdeletekey;
 
 [UninstallDelete]
-Type: files; Name: "{app}\Restart Pricing Monkey.bat";
+Type: files; Name: "{app}\Restart Pricing Monkey Bloomberg.bat";
 
 [UninstallRun]
 Filename: "taskkill"; Parameters: "/im bbapi.exe /f"; Flags: shellexec runhidden waituntilterminated
