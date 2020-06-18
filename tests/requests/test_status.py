@@ -1,19 +1,4 @@
-import eventlet
-import pytest
-
-from server import app as my_app, wireUpBlpapiImplementation
-from bridge.routes import dev
-
 headers=[('Content-Type', 'text/plain')]
-
-
-@pytest.fixture(scope="session")
-def app():
-    wireUpBlpapiImplementation(eventlet.import_patched("blpapi_simulator"))
-    my_app.register_blueprint(dev.blueprint, url_prefix='/dev')
-    my_app.testing = True
-    app = my_app.test_client()
-    return app
 
 
 def test_status(app):
