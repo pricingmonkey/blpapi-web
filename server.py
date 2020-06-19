@@ -20,7 +20,7 @@ from bridge.routes.utils import allow_cors
 from bridge.bloomberg.subscriptions import handle_subscriptions
 from utils import main_is_frozen
 
-VERSION = "3.0.2"
+VERSION = "3.1.0"
 app = Flask(__name__)
 
 app.url_map.strict_slashes = False
