@@ -4,3 +4,4 @@ flask-socketio
 eventlet
 psutil
 python-dateutil
+git+https://github.com/msitt/blpapi-python
