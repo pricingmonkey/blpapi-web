@@ -4,39 +4,41 @@ import eventlet
 BLOOMBERG_HOST = "localhost"
 BLOOMBERG_PORT = 8194
 
+
 class BrokenSessionException(Exception):
     pass
 
+
 class Session:
     def __init__(self):
-        self.sessionImpl = None
+        self.session_impl = None
 
-    def isStarted(self):
-        return self.sessionImpl is not None
+    def is_started(self):
+        return self.session_impl is not None
 
-    def isHealthy(self):
-        return self.isStarted()
+    def is_healthy(self):
+        return self.is_started()
 
     def start(self):
-        if self.isStarted():
+        if self.is_started():
             return
 
-        sessionOptions = blpapi.SessionOptions()
-        sessionOptions.setServerHost(BLOOMBERG_HOST)
-        sessionOptions.setServerPort(BLOOMBERG_PORT)
-        sessionOptions.setAutoRestartOnDisconnection(True)
+        session_options = blpapi.SessionOptions()
+        session_options.setServerHost(BLOOMBERG_HOST)
+        session_options.setServerPort(BLOOMBERG_PORT)
+        session_options.setAutoRestartOnDisconnection(True)
 
-        self.sessionImpl = blpapi.Session(sessionOptions)
+        self.session_impl = blpapi.Session(session_options)
 
-        if not self.sessionImpl.start():
+        if not self.session_impl.start():
             raise BrokenSessionException("Failed to start session on {}:{}".format(BLOOMBERG_HOST, BLOOMBERG_PORT))
 
         return
 
     def stop(self):
         try:
-            if self.isStarted():
-                self.sessionImpl.stop()
+            if self.is_started():
+                self.session_impl.stop()
         except:
             traceback.print_exc()
             pass
@@ -44,63 +46,65 @@ class Session:
             self.reset()
 
     def reset(self):
-        self.sessionImpl = None
+        self.session_impl = None
 
-    def _getOrOpenService(self, serviceName):
+    def _get_or_open_service(self, serviceName):
         try:
-            return self.sessionImpl.getService(serviceName), True
+            return self.session_impl.getService(serviceName), True
         except Exception as e:
-            opened = self.sessionImpl.openService(serviceName)
-            return self.sessionImpl.getService(serviceName), opened
+            opened = self.session_impl.openService(serviceName)
+            return self.session_impl.getService(serviceName), opened
 
-    def getService(self, serviceName):
-        if not self.isStarted():
+    def get_service(self, serviceName):
+        if not self.is_started():
             self.start()
 
         try:
             sessionRestarted = False
-            service, opened = self._getOrOpenService(serviceName)
+            service, opened = self._get_or_open_service(serviceName)
             if not opened:
                 sessionRestarted = True
-                self.sessionImpl.stop()
-                self.sessionImpl.start()
-                if not self.sessionImpl.openService(serviceName):
+                self.session_impl.stop()
+                self.session_impl.start()
+                if not self.session_impl.openService(serviceName):
                     raise BrokenSessionException("Failed to open {}".format(serviceName))
 
             return service, sessionRestarted
         except Exception as e:
             raise BrokenSessionException("Failed to open {}".format(serviceName)) from e
 
-    def sendAndWait(self, request):
-        if not self.isStarted():
+    def send_and_wait(self, request):
+        if not self.is_started():
             self.start()
 
-        eventQueue=blpapi.EventQueue()
-        self.sessionImpl.sendRequest(request, eventQueue=eventQueue)
+        event_queue = blpapi.EventQueue()
+        self.session_impl.sendRequest(request, eventQueue=event_queue)
         responses = []
         while True:
-            ev = eventQueue.tryNextEvent()
+            ev = event_queue.tryNextEvent()
             if not ev:
                 eventlet.sleep(25 / 1000)
                 continue
 
             for msg in ev:
-                if msg.messageType() == blpapi.Name("ReferenceDataResponse") or msg.messageType() == blpapi.Name("HistoricalDataResponse") or msg.messageType() == blpapi.Name("IntradayBarResponse"):
+                if msg.messageType() == blpapi.Name("ReferenceDataResponse") \
+                        or msg.messageType() == blpapi.Name("HistoricalDataResponse") \
+                        or msg.messageType() == blpapi.Name("IntradayBarResponse"):
                     responses.append(msg)
 
-            responseCompletelyReceived = ev.eventType() == blpapi.Event.RESPONSE
-            if responseCompletelyReceived:
+            response_completely_received = ev.eventType() == blpapi.Event.RESPONSE
+            if response_completely_received:
                 break
         return responses
 
     def nextEvent(self, timeout):
-        return self.sessionImpl.nextEvent(timeout)
+        return self.session_impl.nextEvent(timeout)
 
     def subscribe(self, subscriptionList):
-        return self.sessionImpl.subscribe(subscriptionList)
+        return self.session_impl.subscribe(subscriptionList)
 
     def resubscribe(self, subscriptionList):
-        return self.sessionImpl.resubscribe(subscriptionList)
+        return self.session_impl.resubscribe(subscriptionList)
 
     def unsubscribe(self, subscriptionList):
-        return self.sessionImpl.unsubscribe(subscriptionList)
+        return self.session_impl.unsubscribe(subscriptionList)

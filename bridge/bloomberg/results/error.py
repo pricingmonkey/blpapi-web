@@ -1,8 +1,8 @@
-def extractError(errorElement):
-    category = errorElement.getElementValue("category")
-    if errorElement.hasElement("subcategory"):
-        subcategory = errorElement.getElementValue("subcategory")
+def extract_error(error_element):
+    category = error_element.getElementValue("category")
+    if error_element.hasElement("subcategory"):
+        subcategory = error_element.getElementValue("subcategory")
     else:
         subcategory = None
-    message = errorElement.getElementValue("message")
+    message = error_element.getElementValue("message")
     return "{}/{} {}".format(category, subcategory, message)

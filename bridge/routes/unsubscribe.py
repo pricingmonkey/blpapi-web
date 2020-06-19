@@ -2,66 +2,70 @@ import json, sys
 import traceback
 from flask import Blueprint, current_app as app, request, Response
 
-from utils import handleBrokenSession
+from utils import handle_broken_session
 
-from .utils import allowCORS, respond400, respond500, recordBloombergHits
+from .utils import allow_cors, respond400, respond500, record_bloomberg_hits
 
 blueprint = Blueprint('unsubscribe', __name__)
 
-@blueprint.route('/', methods = ['OPTIONS'])
+
+@blueprint.route('/', methods=['OPTIONS'])
 def tellThemWhenCORSIsAllowed():
     response = Response("")
-    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    response.headers['Access-Control-Allow-Origin'] = allow_cors(request.headers.get('Origin'))
     response.headers['Access-Control-Allow-Methods'] = ", ".join(["OPTIONS", "GET", "POST", "DELETE"])
     return response
 
-def doUnsubscribe(securities):
-    try:
-        _, sessionRestarted = app.sessionForSubscriptions.getService("//blp/mktdata")
-        if sessionRestarted:
-            app.allSubscriptions = {}
-        subscriptionList = blpapi.SubscriptionList()
-        for security in securities:
-            correlationId = blpapi.CorrelationId(sys.intern(security))
-            if security in app.allSubscriptions:
-                del app.allSubscriptions[security]
-            subscriptionList.add(security, correlationId=correlationId)
 
-        recordBloombergHits("unsubscribe", subscriptionList.size())
-        app.sessionForSubscriptions.unsubscribe(subscriptionList)
+def do_unsubscribe(securities):
+    try:
+        _, session_restarted = app.session_for_subscriptions.get_service("//blp/mktdata")
+        if session_restarted:
+            app.all_subscriptions = {}
+        subscription_list = blpapi.SubscriptionList()
+        for security in securities:
+            correlation_id = blpapi.CorrelationId(sys.intern(security))
+            if security in app.all_subscriptions:
+                del app.all_subscriptions[security]
+            subscription_list.add(security, correlationId=correlation_id)
+
+        record_bloomberg_hits("unsubscribe", subscription_list.size())
+        app.session_for_subscriptions.unsubscribe(subscription_list)
     except Exception as e:
-        handleBrokenSession(app)
+        handle_broken_session(app)
         traceback.print_exc()
         return respond500(e)
 
     response = Response(
-        json.dumps({ "message": "OK"}).encode(),
+        json.dumps({"message": "OK"}).encode(),
         status=202,
         mimetype='application/json')
-    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    response.headers['Access-Control-Allow-Origin'] = allow_cors(request.headers.get('Origin'))
     return response
 
-@blueprint.route('/', methods = ['DELETE'])
-def unsubscribeAll():
+
+@blueprint.route('/', methods=['DELETE'])
+def unsubscribe_all():
     try:
-        if not app.sessionForSubscriptions.isStarted():
-            app.sessionForSubscriptions.start()
-            app.allSubscriptions = {}
+        if not app.session_for_subscriptions.is_started():
+            app.session_for_subscriptions.start()
+            app.all_subscriptions = {}
     except Exception as e:
-        handleBrokenSession(app)
+        handle_broken_session(app)
         traceback.print_exc()
         return respond500(e)
 
-    return doUnsubscribe(list(app.allSubscriptions.keys()))
+    return do_unsubscribe(list(app.all_subscriptions.keys()))
 
-@blueprint.route('/', methods = ['GET', 'POST'])
+
+@blueprint.route('/', methods=['GET', 'POST'])
 def unsubscribe():
     try:
-        if not app.sessionForSubscriptions.isStarted():
-            app.sessionForSubscriptions.start()
-            app.allSubscriptions = {}
+        if not app.session_for_subscriptions.is_started():
+            app.session_for_subscriptions.start()
+            app.all_subscriptions = {}
     except Exception as e:
-        handleBrokenSession(app)
+        handle_broken_session(app)
         traceback.print_exc()
         return respond500(e)
 
@@ -75,4 +79,4 @@ def unsubscribe():
         traceback.print_exc()
         return respond400(e)
 
-    return doUnsubscribe(securities)
+    return do_unsubscribe(securities)

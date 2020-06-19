@@ -4,34 +4,37 @@ from flask import request, Response, current_app as app
 import traceback
 
 
-def allowCORS(host):
+def allow_cors(host):
     if not host:
         return ""
-    HOSTS = [
+    hosts = [
         "http://localhost:8080",
         "http://localhost:8081"
     ]
-    if host.endswith("pricingmonkey.com") or host in HOSTS: 
+    if host.endswith("pricingmonkey.com") or host in hosts:
         return host
     else:
         return "null"
 
+
 def respond400(e):
     response = Response("{0}: {1}".format(type(e).__name__, e).encode(), status=400)
-    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    response.headers['Access-Control-Allow-Origin'] = allow_cors(request.headers.get('Origin'))
     traceback.print_exc()
     return response
+
 
 def respond500(e):
     response = Response("{0}: {1}".format(type(e).__name__, e).encode(), status=500)
-    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    response.headers['Access-Control-Allow-Origin'] = allow_cors(request.headers.get('Origin'))
     traceback.print_exc()
     return response
 
-def recordBloombergHits(key, number):
+
+def record_bloomberg_hits(key, number):
     today = datetime.date.today().isoformat()
-    if not today in app.bloombergHits:
-        app.bloombergHits[today] = {
+    if not today in app.bloomberg_hits:
+        app.bloomberg_hits[today] = {
             "latest": 0,
             "historical": 0,
             "intraday": 0,
@@ -39,6 +42,6 @@ def recordBloombergHits(key, number):
             "resubscribe": 0,
             "unsubscribe": 0
         }
-    if not key in app.bloombergHits[today]:
-        app.bloombergHits[today][key] = 0
-    app.bloombergHits[today][key] += number
+    if not key in app.bloomberg_hits[today]:
+        app.bloomberg_hits[today][key] = 0
+    app.bloomberg_hits[today][key] += number

@@ -1,5 +1,5 @@
-from bridge.bloomberg.results.latest import extractReferenceSecurityPricing
-from bridge.bloomberg.results.errors import extractErrors
+from bridge.bloomberg.results.latest import extract_reference_security_pricing
+from bridge.bloomberg.results.errors import extract_errors
 from blpapi_simulator.simulator.message import Message, Map, List
 
 
@@ -12,7 +12,7 @@ def test_simple():
             })
         })])
     })
-    response = extractReferenceSecurityPricing(message)
+    response = extract_reference_security_pricing(message)
     assert len(response) == 1
     assert response[0]["security"] == "L Z7 Comdty"
     fields = response[0]["fields"]
@@ -30,7 +30,7 @@ def test_multiple_securities_and_fields():
                 "ASK": "90.00",
                 "BID": "90.00"
             })
-            }), Map({
+        }), Map({
             "security": "L Z6 Comdty",
             "fieldData": Map({
                 "PX_LAST": "90.00",
@@ -38,7 +38,7 @@ def test_multiple_securities_and_fields():
             })
         })])
     })
-    response = extractReferenceSecurityPricing(message)
+    response = extract_reference_security_pricing(message)
     assert len(response) == 2
     assert len(response[0]["fields"]) == 3
     assert len(response[1]["fields"]) == 2
@@ -52,8 +52,8 @@ def test_response_error():
             "message": "MESSAGE"
         })
     })
-    response = extractReferenceSecurityPricing(message)
-    errors = extractErrors(message)
+    response = extract_reference_security_pricing(message)
+    errors = extract_errors(message)
     assert len(response) == 0
     assert len(errors) == 1
     assert errors[0] == "CATEGORY/SUBCATEGORY MESSAGE"
@@ -66,8 +66,8 @@ def test_response_error_no_subcategory():
             "message": "MESSAGE"
         })
     })
-    response = extractReferenceSecurityPricing(message)
-    errors = extractErrors(message)
+    response = extract_reference_security_pricing(message)
+    errors = extract_errors(message)
     assert len(response) == 0
     assert len(errors) == 1
     assert errors[0] == "CATEGORY/None MESSAGE"

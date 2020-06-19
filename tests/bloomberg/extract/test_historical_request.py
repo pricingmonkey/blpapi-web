@@ -1,7 +1,7 @@
 import datetime
 
-from bridge.bloomberg.results.errors import extractErrors
-from bridge.bloomberg.results.historical import extractHistoricalSecurityPricing
+from bridge.bloomberg.results.errors import extract_errors
+from bridge.bloomberg.results.historical import extract_historical_security_pricing
 from blpapi_simulator.simulator.message import Message, Map, List
 
 
@@ -21,7 +21,7 @@ def test_simple():
             ])
         })
     })
-    response = extractHistoricalSecurityPricing(message)
+    response = extract_historical_security_pricing(message)
     assert len(response) == 2
     assert response[0]["date"] == "2006-01-31"
     assert response[1]["date"] == "2006-02-01"
@@ -40,7 +40,7 @@ def test_extract_multiple_fields():
             ])
         })
     })
-    response = extractHistoricalSecurityPricing(message)
+    response = extract_historical_security_pricing(message)
     print(response)
     assert len(response) == 1
     assert len(response[0]["values"][0]["fields"]) == 2
@@ -54,8 +54,8 @@ def test_response_error():
             "message": "MESSAGE"
         })
     })
-    response = extractHistoricalSecurityPricing(message)
-    errors = extractErrors(message)
+    response = extract_historical_security_pricing(message)
+    errors = extract_errors(message)
     assert len(response) == 0
     assert len(errors) == 1
     assert errors[0] == "CATEGORY/SUBCATEGORY MESSAGE"

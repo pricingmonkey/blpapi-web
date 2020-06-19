@@ -13,6 +13,7 @@ if sys.platform == 'win32':
     import py2exe
     from distutils.core import setup
 
+
     class Target:
         def __init__(self, **kw):
             self.__dict__.update(kw)
@@ -22,24 +23,25 @@ if sys.platform == 'win32':
             self.copyright = 'Pricing Monkey Ltd'
             self.name = 'Web API for Bloomberg Market Data'
 
+
     standalone_server = Target(
-        script = 'server.py',
-        dest_base = 'bbapi',
-        description = 'Web API for Bloomberg Market Data',
-        icon_resources = [(1, 'icon.ico')]
+        script='server.py',
+        dest_base='bbapi',
+        description='Web API for Bloomberg Market Data',
+        icon_resources=[(1, 'icon.ico')]
     )
 
     setup(
-        data_files = [('.', ['./ext/blpapi3_64.dll'])],
-        options = {
+        data_files=[('.', ['./ext/blpapi3_64.dll'])],
+        options={
             'py2exe': {
                 'dist_dir': './build',
-                'compressed': True, 
-                'bundle_files': 3, 
+                'compressed': True,
+                'bundle_files': 3,
                 'includes': ['_internals', 'urllib', 'engineio.async_eventlet', 'engineio.async_threading'],
                 'packages': ['blpapi', 'encodings', 'eventlet']
             }},
-            console=[standalone_server]
+        console=[standalone_server]
     )
 elif sys.platform == 'darwin':
     from setuptools import setup

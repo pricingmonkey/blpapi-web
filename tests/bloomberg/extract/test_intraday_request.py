@@ -1,4 +1,4 @@
-from bridge.bloomberg.results.intraday import extractIntradaySecurityPricing
+from bridge.bloomberg.results.intraday import extract_intraday_security_pricing
 from blpapi_simulator.simulator.message import Message, Map, List, Element
 
 
@@ -19,7 +19,7 @@ def test_simple():
                 ])
             })
     })
-    response = extractIntradaySecurityPricing("L Z7 Comdty", message)
+    response = extract_intraday_security_pricing("L Z7 Comdty", message)
     assert response["security"] == "L Z7 Comdty"
     assert response["values"][0]["high"] == "4"
     assert response["values"][0]["low"] == "3"

@@ -3,74 +3,76 @@ import json
 import traceback
 from flask import Blueprint, current_app as app, request, Response
 
-from bridge.bloomberg.results.errors import extractErrors
-from bridge.bloomberg.results.intraday import extractIntradaySecurityPricing
-from utils import handleBrokenSession
+from bridge.bloomberg.results.errors import extract_errors
+from bridge.bloomberg.results.intraday import extract_intraday_security_pricing
+from utils import handle_broken_session
 
-from .utils import allowCORS, respond400, respond500, recordBloombergHits
+from .utils import allow_cors, respond400, respond500, record_bloomberg_hits
 
 blueprint = Blueprint('intraday', __name__)
 
-def requestIntraday(session, securities, eventTypes, startDateTime, endDateTime, interval = 5):
-    recordBloombergHits("intraday", len(securities) * len(eventTypes))
+
+def request_intraday(session, securities, event_types, start_date_time, end_date_time, interval=5):
+    record_bloomberg_hits("intraday", len(securities) * len(event_types))
     try:
-        refDataService, _ = session.getService("//blp/refdata")
-        securityPricing = []
+        ref_data_service, _ = session.get_service("//blp/refdata")
+        security_pricing = []
         errors = []
         for security in securities:
-            for eventType in eventTypes:
-                request = refDataService.createRequest("IntradayBarRequest")
+            for eventType in event_types:
+                intraday_bar_request = ref_data_service.createRequest("IntradayBarRequest")
 
-                request.set("startDateTime", startDateTime)
-                request.set("endDateTime", endDateTime)
-                request.set("security", security)
-                request.set("eventType", eventType)
-                request.set("interval", interval)
+                intraday_bar_request.set("startDateTime", start_date_time)
+                intraday_bar_request.set("endDateTime", end_date_time)
+                intraday_bar_request.set("security", security)
+                intraday_bar_request.set("eventType", eventType)
+                intraday_bar_request.set("interval", interval)
 
-                responses = session.sendAndWait(request)
-
-                for response in responses:
-                    securityPricing.append(extractIntradaySecurityPricing(security, response))
+                responses = session.send_and_wait(intraday_bar_request)
 
                 for response in responses:
-                    errors.extend(extractErrors(response))
+                    security_pricing.append(extract_intraday_security_pricing(security, response))
 
-        return { "response": securityPricing, "errors": errors }
-    except Exception as e:
+                for response in responses:
+                    errors.extend(extract_errors(response))
+
+        return {"response": security_pricing, "errors": errors}
+    except Exception:
         raise
 
 
-def parseJsonRequest(jsonData):
-    securities = [each['security'] for each in jsonData['list']]
+def parse_json_request(json_data):
+    securities = [each['security'] for each in json_data['list']]
 
-    unflattenedEventTypes = [each['eventType'] for each in jsonData['list']]
-    duplicatedEventTypes = [y for x in unflattenedEventTypes for y in x]
-    eventTypes = list(set(duplicatedEventTypes))
+    unflattened_event_types = [each['eventType'] for each in json_data['list']]
+    duplicated_event_types = [y for x in unflattened_event_types for y in x]
+    event_types = list(set(duplicated_event_types))
 
-    startDateTime = dateutil.parser.parse(jsonData['startDateTime'])
-    endDateTime = dateutil.parser.parse(jsonData['endDateTime'])
-    interval = jsonData['interval']
+    start_date_time = dateutil.parser.parse(json_data['startDateTime'])
+    end_date_time = dateutil.parser.parse(json_data['endDateTime'])
+    interval = json_data['interval']
 
-    return securities, eventTypes, startDateTime, endDateTime, interval
+    return securities, event_types, start_date_time, end_date_time, interval
+
 
 # ?eventType=[...]&security=[...]
-@blueprint.route('/', methods = ['GET', 'POST'])
+@blueprint.route('/', methods=['GET', 'POST'])
 def index():
     try:
-        session = app.sessionPoolForRequests.getSession()
+        session = app.session_pool_for_requests.getSession()
     except Exception as e:
-        handleBrokenSession(app)
+        handle_broken_session(app)
         traceback.print_exc()
         return respond500(e)
     try:
         if request.headers['content-type'] == 'application/json':
-            jsonData = request.get_json()
-            securities, eventTypes, startDateTime, endDateTime, interval = parseJsonRequest(jsonData)
+            json_data = request.get_json()
+            securities, event_types, start_date_time, end_date_time, interval = parse_json_request(json_data)
         else:
             securities = request.values.getlist('security') or []
-            eventTypes = request.values.getlist('eventType') or []
-            startDateTime = request.values.get('startDateTime')
-            endDateTime = request.values.get('endDateTime')
+            event_types = request.values.getlist('eventType') or []
+            start_date_time = request.values.get('startDateTime')
+            end_date_time = request.values.get('endDateTime')
             interval = request.values.get('interval')
 
     except Exception as e:
@@ -78,9 +80,10 @@ def index():
         return respond400(e)
 
     try:
-        payload = json.dumps(requestIntraday(session, securities, eventTypes, startDateTime, endDateTime, interval)).encode()
+        intraday_response = request_intraday(session, securities, event_types, start_date_time, end_date_time, interval)
+        payload = json.dumps(intraday_response).encode()
     except Exception as e:
-        handleBrokenSession(app)
+        handle_broken_session(app)
         traceback.print_exc()
         return respond500(e)
 
@@ -88,5 +91,5 @@ def index():
         payload,
         status=200,
         mimetype='application/json')
-    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    response.headers['Access-Control-Allow-Origin'] = allow_cors(request.headers.get('Origin'))
     return response

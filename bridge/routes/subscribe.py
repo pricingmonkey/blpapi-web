@@ -1,60 +1,65 @@
-import json, sys
+import json
+import sys
 import traceback
+
 from flask import Blueprint, current_app as app, request, Response
 
-from utils import handleBrokenSession
-
-from .utils import allowCORS, respond400, respond500, recordBloombergHits
+from utils import handle_broken_session
+from .utils import allow_cors, respond400, respond500, record_bloomberg_hits
 
 blueprint = Blueprint('subscribe', __name__)
 
-@blueprint.route('/', methods = ['OPTIONS'])
-def tellThemWhenCORSIsAllowed():
+
+@blueprint.route('/', methods=['OPTIONS'])
+def tell_them_when_cors_is_allowed():
     response = Response("")
-    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    response.headers['Access-Control-Allow-Origin'] = allow_cors(request.headers.get('Origin'))
     response.headers['Access-Control-Allow-Methods'] = ", ".join(["GET", "POST", "OPTIONS"])
     return response
 
-def doSubscribe(correlationId, security, fields, interval):
-    subscriptionList = blpapi.SubscriptionList()
-    app.allSubscriptions[security] = list(fields)
 
-    subscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
+def do_subscribe(correlationId, security, fields, interval):
+    subscription_list = blpapi.SubscriptionList()
+    app.all_subscriptions[security] = list(fields)
 
-    recordBloombergHits("subscribe", len(fields))
-    app.sessionForSubscriptions.subscribe(subscriptionList)
+    subscription_list.add(security, app.all_subscriptions[security], "interval=" + interval, correlationId)
 
-def doResubscribe(correlationId, security, fields, interval):
-    subscriptionList = blpapi.SubscriptionList()
-    app.allSubscriptions[security] += fields
-    app.allSubscriptions[security] = list(set(app.allSubscriptions[security]))
+    record_bloomberg_hits("subscribe", len(fields))
+    app.session_for_subscriptions.subscribe(subscription_list)
 
-    subscriptionList.add(security, app.allSubscriptions[security], "interval=" + interval, correlationId)
+
+def do_resubscribe(correlationId, security, fields, interval):
+    subscription_list = blpapi.SubscriptionList()
+    app.all_subscriptions[security] += fields
+    app.all_subscriptions[security] = list(set(app.all_subscriptions[security]))
+
+    subscription_list.add(security, app.all_subscriptions[security], "interval=" + interval, correlationId)
 
     try:
-        recordBloombergHits("resubscribe", len(fields))
-        app.sessionForSubscriptions.resubscribe(subscriptionList)
+        record_bloomberg_hits("resubscribe", len(fields))
+        app.session_for_subscriptions.resubscribe(subscription_list)
     except Exception as e:
         traceback.print_exc()
-        recordBloombergHits("unsubscribe", subscriptionList.size() * 3)
-        app.sessionForSubscriptions.unsubscribe(subscriptionList)
-        recordBloombergHits("subscribe", subscriptionList.size() * 3)
-        app.sessionForSubscriptions.subscribe(subscriptionList)
+        record_bloomberg_hits("unsubscribe", subscription_list.size() * 3)
+        app.session_for_subscriptions.unsubscribe(subscription_list)
+        record_bloomberg_hits("subscribe", subscription_list.size() * 3)
+        app.session_for_subscriptions.subscribe(subscription_list)
 
-@blueprint.route('/', methods = ['GET', 'POST'])
+
+@blueprint.route('/', methods=['GET', 'POST'])
 def index():
     try:
-        if not app.sessionForSubscriptions.isStarted():
-            app.sessionForSubscriptions.start()
-            app.allSubscriptions = {}
+        if not app.session_for_subscriptions.is_started():
+            app.session_for_subscriptions.start()
+            app.all_subscriptions = {}
     except Exception as e:
-        handleBrokenSession(app)
+        handle_broken_session(app)
         traceback.print_exc()
         return respond500(e)
     try:
         if request.headers['content-type'] == 'application/json':
             jsonData = request.get_json()
-            securities, fields, interval = parseJsonRequest(jsonData)
+            securities, fields, interval = parse_json_request(jsonData)
         else:
             securities = request.values.getlist('security') or []
             fields = request.values.getlist('field') or []
@@ -67,39 +72,37 @@ def index():
         interval = "2.0"
 
     try:
-        _, sessionRestarted = app.sessionForSubscriptions.getService("//blp/mktdata")
-        if sessionRestarted:
-            app.allSubscriptions = {}
+        _, session_restarted = app.session_for_subscriptions.get_service("//blp/mktdata")
+        if session_restarted:
+            app.all_subscriptions = {}
 
         for security in securities:
-            correlationId = blpapi.CorrelationId(sys.intern(security))
+            correlation_id = blpapi.CorrelationId(sys.intern(security))
 
-            if not security in app.allSubscriptions:
+            if not security in app.all_subscriptions:
                 try:
-                    doSubscribe(correlationId, security, fields, interval)
+                    do_subscribe(correlation_id, security, fields, interval)
                 except blpapi.DuplicateCorrelationIdException as e:
-                    doResubscribe(correlationId, security, fields, interval)
+                    do_resubscribe(correlation_id, security, fields, interval)
             else:
-                doResubscribe(correlationId, security, fields, interval)
+                do_resubscribe(correlation_id, security, fields, interval)
     except Exception as e:
-        handleBrokenSession(app)
+        handle_broken_session(app)
         traceback.print_exc()
         return respond500(e)
 
     response = Response(
-        json.dumps({ "message": "OK"}).encode(),
+        json.dumps({"message": "OK"}).encode(),
         status=202,
         mimetype='application/json')
-    response.headers['Access-Control-Allow-Origin'] = allowCORS(request.headers.get('Origin'))
+    response.headers['Access-Control-Allow-Origin'] = allow_cors(request.headers.get('Origin'))
     return response
 
 
-def parseJsonRequest(jsonData):
-    securities = [each['security'] for each in jsonData['list']]
-    unflattenedFields = [each['fields'] for each in jsonData['list']]
-    duplicatedFields = [y for x in unflattenedFields for y in x]
-    fields = list(set(duplicatedFields))
-    interval = jsonData['interval']
+def parse_json_request(json_data):
+    securities = [each['security'] for each in json_data['list']]
+    unflattened_fields = [each['fields'] for each in json_data['list']]
+    duplicated_fields = [y for x in unflattened_fields for y in x]
+    fields = list(set(duplicated_fields))
+    interval = json_data['interval']
     return securities, fields, interval
-
-

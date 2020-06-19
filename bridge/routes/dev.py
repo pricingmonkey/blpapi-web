@@ -3,8 +3,10 @@ from flask import Blueprint, current_app as app, request, Response
 
 blueprint = Blueprint('dev', __name__)
 
+
 def raise_(ex):
     raise ex
+
 
 class BrokenSession:
     def __init__(self, ignore):
@@ -24,6 +26,7 @@ class BrokenSession:
 
     def nextEvent(self, param):
         raise Exception("broken")
+
 
 class DisconnectedSession:
     def __init__(self, parentSession):
@@ -45,76 +48,92 @@ class DisconnectedSession:
     def nextEvent(self, param):
         raise Exception("disconnected")
 
-@blueprint.route('/requests/session/reset', methods = ['GET'])
-def resetSessionForRequests():
-    app.sessionPoolForRequests.reset()
+
+@blueprint.route('/requests/session/reset', methods=['GET'])
+def reset_session_for_requests():
+    app.session_pool_for_requests.reset()
     return Response("OK", status=200)
 
-@blueprint.route('/subscriptions/session/reset', methods = ['GET'])
-def resetSessionForSubscriptions():
-    app.sessionForSubscriptions.reset()
+
+@blueprint.route('/subscriptions/session/reset', methods=['GET'])
+def reset_session_for_subscriptions():
+    app.session_for_subscriptions.reset()
     return Response("OK", status=200)
+
 
 OriginalSession = [None]
-@blueprint.route('/session/stop', methods = ['GET'])
-def stopSessionForSubscriptions():
+
+
+@blueprint.route('/session/stop', methods=['GET'])
+def stop_session_for_subscriptions():
     OriginalSession[0] = blpapi.Session
     blpapi.Session = BrokenSession
-    app.sessionPoolForRequests.reset()
-    app.sessionForSubscriptions.reset()
+    app.session_pool_for_requests.reset()
+    app.session_for_subscriptions.reset()
     return Response("OK", status=200)
 
-@blueprint.route('/session/start', methods = ['GET'])
-def startSessionForRequests():
+
+@blueprint.route('/session/start', methods=['GET'])
+def start_session_for_requests():
     if OriginalSession[0]:
         blpapi.Session = OriginalSession[0]
-        app.sessionPoolForRequests.reset()
-        app.sessionForSubscriptions.reset()
+        app.session_pool_for_requests.reset()
+        app.session_for_subscriptions.reset()
     return Response("OK", status=200)
 
-@blueprint.route('/session/disconnect', methods = ['GET'])
-def disconnectSession():
-    app.sessionPoolForRequests.sessions[0].sessionImpl = DisconnectedSession(app.sessionPoolForRequests.sessions[0])
-    app.sessionPoolForRequests.sessions[1].sessionImpl = DisconnectedSession(app.sessionPoolForRequests.sessions[1])
-    app.sessionForSubscriptions.sessionImpl = DisconnectedSession(app.sessionForSubscriptions)
+
+@blueprint.route('/session/disconnect', methods=['GET'])
+def disconnect_session():
+    app.session_pool_for_requests.sessions[0].session_impl = DisconnectedSession(app.session_pool_for_requests.sessions[0])
+    app.session_pool_for_requests.sessions[1].session_impl = DisconnectedSession(app.session_pool_for_requests.sessions[1])
+    app.session_for_subscriptions.session_impl = DisconnectedSession(app.session_for_subscriptions)
     return Response("OK", status=200)
 
-def functionOneTimeBroken(original):
+
+def function_one_time_broken(original):
     hit = [False]
+
     def function(*args, **kwargs):
-        if hit[0]: 
+        if hit[0]:
             return original(*args, **kwargs)
         else:
             hit[0] = True
             raise_(Exception("service is broken"))
+
     return function
 
-@blueprint.route('/requests/sendRequest/break', methods = ['GET'])
-def breakSendRequestForRequests():
-    sessionPool = app.sessionPoolForRequests
-    session = sessionPool.sessions[sessionPool.currentIndex]
+
+@blueprint.route('/requests/sendRequest/break', methods=['GET'])
+def break_send_request_for_requests():
+    session_pool = app.session_pool_for_requests
+    session = session_pool.sessions[session_pool.currentIndex]
     session.start()
-    session.sessionImpl.sendRequest = functionOneTimeBroken(session.sessionImpl.sendRequest)
+    session.session_impl.sendRequest = function_one_time_broken(session.session_impl.sendRequest)
 
     return Response("OK", status=200)
 
-@blueprint.route('/subscriptions/nextEvent/break', methods = ['GET'])
-def breakNextEventForSubscriptions():
-    app.sessionForSubscriptions.sessionImpl.nextEvent = functionOneTimeBroken(app.sessionForSubscriptions.sessionImpl.nextEvent)
+
+@blueprint.route('/subscriptions/nextEvent/break', methods=['GET'])
+def break_next_event_for_subscriptions():
+    app.session_for_subscriptions.session_impl.nextEvent = function_one_time_broken(
+        app.session_for_subscriptions.session_impl.nextEvent)
 
     return Response("OK", status=200)
 
-@blueprint.route('/requests/getService/break', methods = ['GET'])
-def breakGetServiceForRequests():
-    sessionPool = app.sessionPoolForRequests
-    session = sessionPool.sessions[sessionPool.currentIndex]
+
+@blueprint.route('/requests/getService/break', methods=['GET'])
+def break_get_service_for_requests():
+    session_pool = app.session_pool_for_requests
+    session = session_pool.sessions[session_pool.currentIndex]
     session.start()
-    session.sessionImpl.getService = functionOneTimeBroken(session.sessionImpl.getService)
+    session.session_impl.getService = function_one_time_broken(session.session_impl.getService)
 
     return Response("OK", status=200)
 
-@blueprint.route('/subscriptions/getService/break', methods = ['GET'])
-def breakGetServiceForSubscriptions():
-    app.sessionForSubscriptions.sessionImpl.getService = functionOneTimeBroken(app.sessionForSubscriptions.sessionImpl.getService)
+
+@blueprint.route('/subscriptions/getService/break', methods=['GET'])
+def break_get_service_for_subscriptions():
+    app.session_for_subscriptions.session_impl.getService = function_one_time_broken(
+        app.session_for_subscriptions.session_impl.getService)
 
     return Response("OK", status=200)

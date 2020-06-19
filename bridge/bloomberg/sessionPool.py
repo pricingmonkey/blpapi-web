@@ -12,13 +12,13 @@ class SessionPool:
     def getSession(self):
         nextIndex = (self.currentIndex + 1) % self.__poolSize()
         session = self.sessions[self.currentIndex]
-        if not session.isStarted():
+        if not session.is_started():
             session.start()
         self.currentIndex = nextIndex
         return session
 
     def isHealthy(self):
-        return all(map(lambda session: session.isStarted(), self.sessions))
+        return all(map(lambda session: session.is_started(), self.sessions))
 
     def open(self):
         for session in self.sessions:

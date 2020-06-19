@@ -1,42 +1,44 @@
 import traceback
 
-from utils import handleBrokenSession
+from utils import handle_broken_session
 
-def extractFieldValues(message, fields):
+
+def extract_field_values(message, fields):
     d = {}
     for each in message.asElement().elements():
         if each.numValues() > 0:
             try:
-                fieldName = str(each.name())
-                if fieldName in fields:
-                    d[fieldName] = each.getValueAsString()
-            except Exception as e:
+                field_name = str(each.name())
+                if field_name in fields:
+                    d[field_name] = each.getValueAsString()
+            except Exception:
                 traceback.print_exc()
     return d
+
 
 class SubscriptionEventHandler(object):
     def __init__(self, app, socketio):
         self.app = app
         self.socketio = socketio
 
-    def processSubscriptionStatus(self, event):
+    def process_subscription_status(self, event):
         for msg in event:
             security = msg.correlationIds()[0].value()
             if msg.messageType() == "SubscriptionFailure":
-                if security in self.app.allSubscriptions:
-                    del self.app.allSubscriptions[security]
-                print("SubscriptionFailure: " + str({ 'security': security, 'description': str(msg) }))
+                if security in self.app.all_subscriptions:
+                    del self.app.all_subscriptions[security]
+                print("SubscriptionFailure: " + str({'security': security, 'description': str(msg)}))
         return True
 
-    def processSubscriptionDataEvent(self, event):
+    def process_subscription_data_event(self, event):
         messages = []
         for msg in event:
             security = msg.correlationIds()[0].value()
-            fields = self.app.allSubscriptions[security]
+            fields = self.app.all_subscriptions[security]
             messages.append({
                 "type": "SUBSCRIPTION_DATA",
                 "security": security,
-                "values": extractFieldValues(msg, fields)
+                "values": extract_field_values(msg, fields)
             })
             if len(messages) > 10:
                 self.socketio.emit("action", messages, namespace="/")
@@ -47,31 +49,32 @@ class SubscriptionEventHandler(object):
             self.socketio.sleep(5 / 1000)
         return True
 
-    def processEvent(self, event):
+    def process_event(self, event):
         try:
             if event.eventType() == blpapi.Event.SUBSCRIPTION_DATA:
-                return self.processSubscriptionDataEvent(event)
+                return self.process_subscription_data_event(event)
             elif event.eventType() == blpapi.Event.SUBSCRIPTION_STATUS:
-                return self.processSubscriptionStatus(event)
+                return self.process_subscription_status(event)
             else:
                 return True
         except blpapi.Exception as e:
             traceback.print_exc()
         return False
 
-def handleSubscriptions(app, socketio):
-    eventHandler = SubscriptionEventHandler(app, socketio)
+
+def handle_subscriptions(app, socketio):
+    event_handler = SubscriptionEventHandler(app, socketio)
     while True:
         try:
-            if not app.sessionForSubscriptions.isStarted():
-                app.sessionForSubscriptions.start()
-                app.allSubscriptions = {}
+            if not app.session_for_subscriptions.is_started():
+                app.session_for_subscriptions.start()
+                app.all_subscriptions = {}
 
-            event = app.sessionForSubscriptions.nextEvent(50)
-            eventHandler.processEvent(event)
-        except Exception as e:
+            event = app.session_for_subscriptions.nextEvent(50)
+            event_handler.process_event(event)
+        except Exception:
             traceback.print_exc()
-            handleBrokenSession(app)
+            handle_broken_session(app)
             socketio.sleep(1)
         finally:
             socketio.sleep()
